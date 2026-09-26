@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIREGUARD AI | Secure Command Center Authentication</title>
+  
+  <!-- CSS Dependencies -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/command_center.css">
+  
+  <style>
+    body {
+      background: radial-gradient(circle at 50% 20%, #0F172A 0%, #070B14 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 960px;
+      margin: auto;
+    }
+
+    .auth-card {
+      background: rgba(13, 21, 39, 0.92);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(6, 182, 212, 0.15);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .auth-nav-tabs .nav-link {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 12px 24px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.2s ease;
+    }
+
+    .auth-nav-tabs .nav-link.active {
+      color: #38BDF8;
+      border-bottom: 2px solid #38BDF8;
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    .form-control, .form-select {
+      background: #020617;
+      border: 1px solid #1E293B;
+      color: #F8FAFC;
+      font-size: 0.88rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+      background: #020617;
+      border-color: #38BDF8;
+      color: #F8FAFC;
+      box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.2);
+    }
+
+    .persona-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      width: 100%;
+    }
+
+    .persona-card:hover {
+      border-color: #38BDF8;
+      background: rgba(56, 189, 248, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .persona-card strong {
+      display: block;
+      color: #F1F5F9;
+      font-size: 0.85rem;
+    }
+
+    .persona-card span {
+      font-size: 0.72rem;
+      color: #94A3B8;
+    }
+
+    .btn-auth-submit {
+      background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-auth-submit:hover {
+      background: linear-gradient(135deg, #0369A1 0%, #075985 100%);
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-container">
+    <!-- Header Brand Section -->
+    <div class="text-center mb-4">
+      <div class="d-inline-flex align-items-center gap-2 mb-2">
+        <div class="radar-logo" style="width: 42px; height: 42px;">
+          <i class="bi bi-shield-shaded text-info fs-3"></i>
+        </div>
+        <h2 class="fw-bold mb-0 text-light tracking-wide">FIREGUARD AI</h2>
+      </div>
+      <div class="text-info font-monospace small">SMART INDIA HACKATHON &bull; PROBLEM STATEMENT SIH26162</div>
+      <div class="text-muted small mt-1">Satellite-Driven AI Industrial Fire & Persistent Thermal Source Command Portal</div>
+    </div>
+
+    <div class="auth-card">
+      <div class="row g-0">
+        
+        <!-- Left Column: Authentication Form -->
+        <div class="col-lg-7 p-4 p-md-5">
+          <ul class="nav nav-tabs auth-nav-tabs mb-4" id="authTabs" role="tablist">
+            <li class="nav-item flex-fill text-center" role="presentation">
+              <button class="nav-link active w-100" id="login-tab" data-bs-toggle="tab" data-bs-target="#tab-login" type="button" role="tab">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+              </button>
+            </li>
+            <li class="nav-item flex-fill text-center" role="presentation">
+              <button class="nav-link w-100" id="register-tab" data-bs-toggle="tab" data-bs-target="#tab-register" type="button" role="tab">
+                <i class="bi bi-person-plus me-1"></i> New Registration
+              </button>
+            </li>
+          </ul>
+
+          <!-- Alert feedback container -->
+          <div id="auth-alert" class="alert d-none mb-3 py-2 small" role="alert"></div>
+
+          <div class="tab-content" id="authTabsContent">
+            
+            <!-- SIGN IN TAB -->
+            <div class="tab-pane fade show active" id="tab-login" role="tabpanel">
+              <form id="form-login" onsubmit="AuthPage.handleLogin(event)">
+                <div class="mb-3">
+                  <label class="form-label text-muted small fw-bold">OPERATOR / USERNAME</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-info"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="login-username" required placeholder="Enter username (e.g. operator, admin)" value="operator">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-muted small fw-bold">PASSWORD</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-info"><i class="bi bi-key"></i></span>
+                    <input type="password" class="form-control" id="login-password" required placeholder="Enter password" value="operator123">
+                    <button class="btn btn-outline-secondary" type="button" onclick="AuthPage.togglePassword('login-password')">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div class="form-check">
+                    <input class="form-check-input bg-dark border-secondary" type="checkbox" id="rememberMe" checked>
+                    <label class="form-check-label text-muted small" for="rememberMe">Remember Terminal Session</label>
+                  </div>
+                  <a href="#" onclick="alert('For SIH demonstration evaluation, select any Persona from the right panel to instantly pre-fill credentials.')" class="text-info small text-decoration-none">
+                    Need Credentials?
+                  </a>
+                </div>
+
+                <button type="submit" class="btn btn-auth-submit w-100" id="btn-login-submit">
+                  <i class="bi bi-shield-lock-fill me-1"></i> Authenticate & Enter Command Center
+                </button>
+              </form>
+            </div>
+
+            <!-- REGISTRATION TAB -->
+            <div class="tab-pane fade" id="tab-register" role="tabpanel">
+              <form id="form-register" onsubmit="AuthPage.handleRegister(event)">
+                <div class="row g-2 mb-2">
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">USERNAME</label>
+                    <input type="text" class="form-control" id="reg-username" required placeholder="e.g. j_doe">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">OFFICIAL EMAIL</label>
+                    <input type="email" class="form-control" id="reg-email" required placeholder="name@agency.gov.in">
+                  </div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">FULL NAME</label>
+                    <input type="text" class="form-control" id="reg-fullname" required placeholder="Dr. Jane Doe">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">DESIGNATED ROLE</label>
+                    <select class="form-select" id="reg-role" required>
+                      <option value="OPERATOR" selected>Operator (Command Center)</option>
+                      <option value="ANALYST">Geospatial Analyst</option>
+                      <option value="FACILITY_MANAGER">Facility Safety Lead</option>
+                      <option value="PUBLIC">Public Awareness Observer</option>
+                      <option value="ADMIN">NDMA Administrator</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">AGENCY / PLANT</label>
+                    <input type="text" class="form-control" id="reg-agency" placeholder="e.g. SEOC Emergency Ops">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-muted small fw-bold">EMERGENCY PHONE</label>
+                    <input type="text" class="form-control" id="reg-phone" placeholder="+91 98765 43210">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-muted small fw-bold">ACCESS PASSWORD</label>
+                  <input type="password" class="form-control" id="reg-password" required placeholder="Min 6 characters">
+                </div>
+
+                <button type="submit" class="btn btn-auth-submit w-100" id="btn-reg-submit">
+                  <i class="bi bi-person-check-fill me-1"></i> Register New Responder Account
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+          <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+            <a href="/" class="text-muted small text-decoration-none">
+              <i class="bi bi-arrow-left"></i> Return to Public Portal
+            </a>
+            <a href="/app" class="text-info small text-decoration-none">
+              Bypass Auth (Guest Mode) <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Right Column: Demo Persona Quick Select -->
+        <div class="col-lg-5 p-4 p-md-5 border-start border-secondary border-opacity-25" style="background: rgba(2, 6, 23, 0.6);">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge bg-info text-dark font-monospace">SIH EVALUATOR</span>
+            <h6 class="text-light fw-bold mb-0">1-Click Role Logins</h6>
+          </div>
+          <p class="text-muted" style="font-size: 0.78rem; line-height: 1.5;">
+            Click any operational persona below to auto-populate credentials and sign in immediately with that role's permissions:
+          </p>
+
+          <div class="d-flex flex-column gap-2 mb-4">
+            
+            <button type="button" class="persona-card" onclick="AuthPage.fillPersona('admin', 'admin123', 'ADMIN')">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong><i class="bi bi-shield-fill-check text-danger me-1"></i> NDMA Director (Admin)</strong>
+                <span class="badge bg-danger">ADMIN</span>
+              </div>
+              <span>Username: <code>admin</code> &bull; Password: <code>admin123</code></span>
+            </button>
+
+            <button type="button" class="persona-card" onclick="AuthPage.fillPersona('operator', 'operator123', 'OPERATOR')">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong><i class="bi bi-headset text-warning me-1"></i> Incident Commander (Operator)</strong>
+                <span class="badge bg-warning text-dark">OPERATOR</span>
+              </div>
+              <span>Username: <code>operator</code> &bull; Password: <code>operator123</code></span>
+            </button>
+
+            <button type="button" class="persona-card" onclick="AuthPage.fillPersona('analyst', 'analyst123', 'ANALYST')">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong><i class="bi bi-satellite text-info me-1"></i> ISRO Analyst (Earth Obs)</strong>
+                <span class="badge bg-info text-dark">ANALYST</span>
+              </div>
+              <span>Username: <code>analyst</code> &bull; Password: <code>analyst123</code></span>
+            </button>
+
+            <button type="button" class="persona-card" onclick="AuthPage.fillPersona('facility_mgr', 'facility123', 'FACILITY_MANAGER')">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong><i class="bi bi-buildings text-primary me-1"></i> Refinery HSE Head (Facility)</strong>
+                <span class="badge bg-primary">FACILITY MGR</span>
+              </div>
+              <span>Username: <code>facility_mgr</code> &bull; Password: <code>facility123</code></span>
+            </button>
+
+            <button type="button" class="persona-card" onclick="AuthPage.fillPersona('public_user', 'public123', 'PUBLIC')">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong><i class="bi bi-people text-secondary me-1"></i> Public Civilian Observer</strong>
+                <span class="badge bg-secondary">PUBLIC</span>
+              </div>
+              <span>Username: <code>public_user</code> &bull; Password: <code>public123</code></span>
+            </button>
+
+          </div>
+
+          <div class="p-3 rounded" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); font-size: 0.74rem;">
+            <div class="text-info fw-bold mb-1"><i class="bi bi-info-circle me-1"></i> ISO 27001 & RBAC Compliance:</div>
+            <div class="text-muted">
+              Role permissions strictly govern access to Multi-Agency Dispatch Simulation, Incident Status Verification, and FIRMS Satellite Ingestion.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const AuthPage = {
+      showAlert(msg, type = "danger") {
+        const el = document.getElementById("auth-alert");
+        el.className = `alert alert-${type} mb-3 py-2 small`;
+        el.innerHTML = `<i class="bi bi-${type === 'danger' ? 'exclamation-triangle' : 'check-circle'}-fill me-1"></i> ${msg}`;
+        el.classList.remove("d-none");
+      },
+
+      hideAlert() {
+        const el = document.getElementById("auth-alert");
+        el.classList.add("d-none");
+      },
+
+      togglePassword(inputId) {
+        const inp = document.getElementById(inputId);
+        inp.type = inp.type === "password" ? "text" : "password";
+      },
+
+      fillPersona(user, pass, role) {
+        // Switch to login tab
+        const triggerEl = document.querySelector('#authTabs button[data-bs-target="#tab-login"]');
+        bootstrap.Tab.getInstance(triggerEl) || new bootstrap.Tab(triggerEl).show();
+
+        document.getElementById("login-username").value = user;
+        document.getElementById("login-password").value = pass;
+        this.showAlert(`Selected [${role}] persona credentials pre-filled. Click 'Authenticate' or press Enter.`, "info");
+      },
+
+      async handleLogin(e) {
+        e.preventDefault();
+        this.hideAlert();
+        const btn = document.getElementById("btn-login-submit");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Authenticating...`;
+
+        const username = document.getElementById("login-username").value.trim();
+        const password = document.getElementById("login-password").value;
+
+        try {
+          const res = await fetch("/api/v1/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.detail?.message || data.error?.message || "Invalid username or password");
+          }
+
+          // Save token & user
+          localStorage.setItem("fireguard_token", data.access_token);
+          localStorage.setItem("fireguard_user", JSON.stringify({
+            username: data.username,
+            role: data.role,
+            user_id: data.user_id
+          }));
+
+          this.showAlert("Authentication verified! Launching Command Center...", "success");
+          setTimeout(() => {
+            window.location.href = "/app";
+          }, 600);
+
+        } catch (err) {
+          this.showAlert(err.message, "danger");
+          btn.disabled = false;
+          btn.innerHTML = `<i class="bi bi-shield-lock-fill me-1"></i> Authenticate & Enter Command Center`;
+        }
+      },
+
+      async handleRegister(e) {
+        e.preventDefault();
+        this.hideAlert();
+        const btn = document.getElementById("btn-reg-submit");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Registering...`;
+
+        const payload = {
+          username: document.getElementById("reg-username").value.trim(),
+          email: document.getElementById("reg-email").value.trim(),
+          full_name: document.getElementById("reg-fullname").value.trim(),
+          role: document.getElementById("reg-role").value,
+          agency: document.getElementById("reg-agency").value.trim(),
+          phone: document.getElementById("reg-phone").value.trim(),
+          password: document.getElementById("reg-password").value
+        };
+
+        try {
+          const res = await fetch("/api/v1/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.detail?.message || data.error?.message || "Registration failed");
+          }
+
+          // Auto-login with new account
+          const loginRes = await fetch("/api/v1/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: payload.username, password: payload.password })
+          });
+
+          if (loginRes.ok) {
+            const loginData = await loginRes.json();
+            localStorage.setItem("fireguard_token", loginData.access_token);
+            localStorage.setItem("fireguard_user", JSON.stringify(loginData));
+            this.showAlert("Account registered and authenticated! Launching Command Center...", "success");
+            setTimeout(() => {
+              window.location.href = "/app";
+            }, 700);
+          } else {
+            this.showAlert("Account created successfully! Please sign in with your credentials.", "success");
+            const triggerEl = document.querySelector('#authTabs button[data-bs-target="#tab-login"]');
+            new bootstrap.Tab(triggerEl).show();
+            document.getElementById("login-username").value = payload.username;
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-person-check-fill me-1"></i> Register New Responder Account`;
+          }
+
+        } catch (err) {
+          this.showAlert(err.message, "danger");
+          btn.disabled = false;
+          btn.innerHTML = `<i class="bi bi-person-check-fill me-1"></i> Register New Responder Account`;
+        }
+      }
+    };
+  </script>
+</body>
+</html>

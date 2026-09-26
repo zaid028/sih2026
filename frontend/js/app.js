@@ -1,0 +1,525 @@
+/**
+ * FIREGUARD AI - Main Application Bootstrap & Coordinator
+ * Connects Frontend directly to FastAPI /api/v1/* architecture, WebSockets, Health Monitor & SIH Demo.
+ */
+const App = {
+  async init() {
+    console.log("Booting FIREGUARD AI Command Center...");
+
+    // Start Mission Clocks
+    this.startMissionClocks();
+
+    // Initialize Router
+    Router.init();
+
+    // Initialize Tactical Map
+    TacticalMap.init("tactical-map-container");
+
+    // Load Authenticated User Profile
+    await this.loadCurrentUser();
+
+    // Connect Real-time WebSocket
+    this.initWebSocket();
+
+    // Fetch initial datasets
+    await this.refreshData();
+
+    // Setup Demo Role Switcher
+    this.bindRoleSwitcher();
+
+    // Start Periodic Background Polling (fallback to WS)
+    setInterval(() => {
+      this.refreshData(true);
+    }, AppConfig.POLL_INTERVAL_MS);
+
+    console.log("FIREGUARD AI Command Center ready.");
+  },
+
+  startMissionClocks() {
+    const update = () => {
+      const now = new Date();
+      const utcEl = document.getElementById("clock-utc");
+      const istEl = document.getElementById("clock-ist");
+
+      if (utcEl) {
+        utcEl.innerText = now.toUTCString().slice(17, 25) + " UTC";
+      }
+      if (istEl) {
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istDate = new Date(now.getTime() + istOffset);
+        istEl.innerText = istDate.toUTCString().slice(17, 25) + " IST";
+      }
+    };
+    update();
+    setInterval(update, 1000);
+  },
+
+  initWebSocket() {
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const host = window.location.host || "127.0.0.1:5000";
+      const wsUrl = `${protocol}//${host}/api/v1/ws/hotspots`;
+      
+      const ws = new WebSocket(wsUrl);
+      ws.onopen = () => {
+        console.log("[WebSocket] Connected to FIREGUARD AI live event bus.");
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === "DEMO_INCIDENT_CREATED" || data.event === "NEW_CRITICAL_INCIDENT") {
+            this.showTacticalToast(`SATELLITE DETECTION: ${data.payload.title}`);
+            this.refreshData(true);
+          }
+        } catch (e) {}
+      };
+
+      ws.onclose = () => {
+        // Auto-reconnect after 5 seconds
+        setTimeout(() => this.initWebSocket(), 5000);
+      };
+    } catch (err) {
+      console.warn("[WebSocket] Initialization skipped, relying on REST polling:", err);
+    }
+  },
+
+  showTacticalToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "alert alert-danger position-fixed bottom-0 end-0 m-3 shadow-lg z-3";
+    toast.style.border = "1px solid #EF4444";
+    toast.style.background = "rgba(15, 23, 42, 0.95)";
+    toast.innerHTML = `<i class="bi bi-radioactive text-danger me-2"></i><strong>TACTICAL ALERT:</strong> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 6000);
+  },
+
+  async refreshData(isBackground = false) {
+    try {
+      const [status, hpRes, incRes, facRes] = await Promise.all([
+        Api.fetchSystemStatus(),
+        Api.fetchHotspots(),
+        Api.fetchIncidents(),
+        Api.fetchFacilities()
+      ]);
+
+      AppState.systemStatus = status;
+      AppState.hotspots = hpRes.hotspots || hpRes || [];
+      AppState.incidents = incRes.incidents || incRes || [];
+      AppState.facilities = facRes.facilities || facRes || [];
+
+      // Update Header Status Indicator (Requirement 23: Clearly show 🟡 DEMO MODE)
+      const statusPill = document.getElementById("nav-system-status");
+      if (statusPill) {
+        if (status.demo_mode) {
+          statusPill.className = "telemetry-pill border-warning text-warning";
+          statusPill.innerHTML = `
+            <span class="badge bg-warning text-dark me-1">🟡</span>
+            <span>DEMO MODE ACTIVE</span>
+          `;
+        } else {
+          statusPill.className = "telemetry-pill border-success text-success";
+          statusPill.innerHTML = `
+            <span class="badge bg-success text-light me-1">🟢</span>
+            <span>LIVE SATELLITE (NASA FIRMS)</span>
+          `;
+        }
+      }
+
+      // Update Threat Count
+      const threatPill = document.getElementById("nav-threat-count");
+      if (threatPill && status.critical_threats !== undefined) {
+        threatPill.innerHTML = `
+          <i class="bi bi-radioactive text-danger"></i>
+          <span>${status.critical_threats} CRITICAL THREATS</span>
+        `;
+      }
+
+      // Update Map Layers
+      TacticalMap.renderHotspots(AppState.hotspots, AppState.incidents);
+      TacticalMap.renderFacilities(AppState.facilities);
+
+      // Render Active View
+      if (AppState.activeTab === "dashboard") DashboardView.render();
+      else if (AppState.activeTab === "hotspots") HotspotsView.render();
+      else if (AppState.activeTab === "incidents") IncidentsView.render();
+      else if (AppState.activeTab === "facilities") FacilitiesView.render();
+
+      DashboardView.updateKpis();
+    } catch (err) {
+      if (!isBackground) console.warn("Failed to load application state:", err);
+    }
+  },
+
+  async loadCurrentUser() {
+    let user = null;
+    const storedUser = localStorage.getItem("fireguard_user");
+    if (storedUser) {
+      try {
+        user = JSON.parse(storedUser);
+      } catch (e) {}
+    }
+
+    const token = localStorage.getItem("fireguard_token");
+    if (token) {
+      try {
+        const me = await Api.get("/api/v1/auth/me");
+        if (me && me.username) {
+          user = me;
+          localStorage.setItem("fireguard_user", JSON.stringify(me));
+        }
+      } catch (err) {
+        console.warn("Auth /me fetch error, using fallback profile:", err);
+      }
+    }
+
+    if (!user) {
+      user = {
+        username: "operator",
+        role: "OPERATOR",
+        full_name: "Commander Rajesh Sharma",
+        agency: "State Emergency Operation Center (SEOC) Gujarat",
+        phone: "+91 79 2325 1900",
+        email: "operator@fireguard.gov.in"
+      };
+    }
+
+    AppState.currentUser = user;
+    this.updateUserInterface(user);
+  },
+
+  updateUserInterface(user) {
+    if (!user) return;
+    const nameLabel = document.getElementById("user-name-label");
+    const roleLabel = document.getElementById("user-role-label");
+    const navName = document.getElementById("nav-user-fullname");
+    const selector = document.getElementById("demo-role-selector");
+
+    if (nameLabel) nameLabel.innerText = user.full_name || user.username;
+    if (roleLabel) roleLabel.innerText = (user.role || "OPERATOR").toUpperCase();
+    if (navName) navName.innerText = (user.full_name || user.username).split(" ")[0];
+
+    if (selector && user.role) {
+      const targetVal = user.role.toLowerCase();
+      for (let i = 0; i < selector.options.length; i++) {
+        if (selector.options[i].value === targetVal || targetVal.includes(selector.options[i].value)) {
+          selector.selectedIndex = i;
+          break;
+        }
+      }
+    }
+  },
+
+  openUserProfileModal() {
+    const modalEl = document.getElementById("userProfileModal");
+    if (!modalEl) return;
+
+    const u = AppState.currentUser || {};
+    const fullNameEl = document.getElementById("profile-full-name");
+    const roleBadgeEl = document.getElementById("profile-role-badge");
+    const agencyEl = document.getElementById("profile-agency");
+    const userEl = document.getElementById("profile-username");
+    const emailEl = document.getElementById("profile-email");
+    const phoneEl = document.getElementById("profile-phone");
+
+    if (fullNameEl) fullNameEl.innerText = u.full_name || "Tactical Commander";
+    if (roleBadgeEl) {
+      roleBadgeEl.innerText = (u.role || "OPERATOR").toUpperCase();
+      roleBadgeEl.className = `badge font-monospace mb-2 ${u.role === 'ADMIN' ? 'bg-danger' : (u.role === 'OPERATOR' ? 'bg-warning text-dark' : 'bg-info text-dark')}`;
+    }
+    if (agencyEl) agencyEl.innerText = u.agency || "National Disaster Management Authority";
+    if (userEl) userEl.innerText = u.username || "operator";
+    if (emailEl) emailEl.innerText = u.email || `${u.username || 'operator'}@fireguard.gov.in`;
+    if (phoneEl) phoneEl.innerText = u.phone || "+91 11 2670 1700";
+
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  },
+
+  logout() {
+    if (confirm("Are you sure you want to log out of the command terminal?")) {
+      localStorage.removeItem("fireguard_token");
+      localStorage.removeItem("fireguard_user");
+      window.location.href = "/login";
+    }
+  },
+
+  bindRoleSwitcher() {
+    const sel = document.getElementById("demo-role-selector");
+    if (!sel) return;
+
+    sel.onchange = async (e) => {
+      const role = e.target.value;
+      try {
+        const res = await Api.switchDemoRole(role);
+        AppState.currentUser = res.user;
+        this.updateUserInterface(res.user);
+      } catch (err) {
+        console.warn("Failed to switch role:", err);
+      }
+    };
+  },
+
+  // Requirement 26: Health Monitor Modal
+  async openHealthModal() {
+    const modalEl = document.getElementById("healthMonitorModal");
+    const bodyEl = document.getElementById("health-modal-body");
+    if (!modalEl || !bodyEl) return;
+
+    bodyEl.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-info" role="status"></div><div class="mt-2 text-muted">Polling micro-component health...</div></div>`;
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+
+    try {
+      const health = await Api.fetchHealthStatus();
+      const comp = health.components;
+
+      const getBadge = (val) => {
+        if (val === "ONLINE") return `<span class="badge bg-success">● ONLINE</span>`;
+        if (val === "DEMO") return `<span class="badge bg-warning text-dark">● DEMO</span>`;
+        return `<span class="badge bg-danger">● OFFLINE</span>`;
+      };
+
+      bodyEl.innerHTML = `
+        <div class="card bg-black border-secondary mb-3">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small">OVERALL STATUS</span>
+              <span class="badge ${health.status === 'OPERATIONAL' ? 'bg-success' : 'bg-warning'} fs-6">${health.status}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted small">DEMO MODE FLAG</span>
+              <span class="badge ${health.demo_mode ? 'bg-warning text-dark' : 'bg-info'}">${health.demo_mode ? 'TRUE (SYNTHETIC)' : 'FALSE (LIVE APIS)'}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">TIMESTAMP</span>
+              <span class="font-monospace small text-light">${health.timestamp}</span>
+            </div>
+          </div>
+        </div>
+
+        <h6 class="text-info fw-bold mb-3"><i class="bi bi-hdd-network me-2"></i>Micro-component Telemetry</h6>
+        <div class="table-responsive">
+          <table class="table table-dark table-sm table-bordered">
+            <thead>
+              <tr class="text-secondary small">
+                <th>Component</th>
+                <th>Subsystem</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Backend Engine</strong></td>
+                <td class="text-muted small">Python FastAPI v${health.version}</td>
+                <td>${getBadge(comp.backend)}</td>
+              </tr>
+              <tr>
+                <td><strong>Database & PostGIS</strong></td>
+                <td class="text-muted small">SQLAlchemy Spatial Engine</td>
+                <td>${getBadge(comp.database)}</td>
+              </tr>
+              <tr>
+                <td><strong>NASA FIRMS</strong></td>
+                <td class="text-muted small">VIIRS SNPP & MODIS Satellite Feed</td>
+                <td>${getBadge(comp.nasa_firms)}</td>
+              </tr>
+              <tr>
+                <td><strong>OpenStreetMap (OSM)</strong></td>
+                <td class="text-muted small">Overpass Geospatial API</td>
+                <td>${getBadge(comp.osm)}</td>
+              </tr>
+              <tr>
+                <td><strong>AI Classification</strong></td>
+                <td class="text-muted small">8-Class FireGuard-XAI Inference Engine</td>
+                <td>${getBadge(comp.ai_engine)}</td>
+              </tr>
+              <tr>
+                <td><strong>Safety Routing</strong></td>
+                <td class="text-muted small">Dynamic Danger-Zone Bypass Router</td>
+                <td>${getBadge(comp.routing)}</td>
+              </tr>
+              <tr>
+                <td><strong>Notification Service</strong></td>
+                <td class="text-muted small">Multi-Agency SMS / Email Dispatch</td>
+                <td>${getBadge(comp.notification_service)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      bodyEl.innerHTML = `<div class="alert alert-danger">Failed to fetch component health: ${err.message}</div>`;
+    }
+  },
+
+  // Requirement 25: 12-Step End-to-End SIH Demo Flow
+  async triggerSihDemoFlow() {
+    const modalEl = document.getElementById("sihDemoModal");
+    const bodyEl = document.getElementById("sih-demo-modal-body");
+    if (!modalEl || !bodyEl) return;
+
+    bodyEl.innerHTML = `
+      <div class="text-center py-5">
+        <div class="spinner-grow text-danger mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+        <h5 class="text-light fw-bold">Executing SIH26162 End-to-End Simulation Pipeline...</h5>
+        <div class="text-muted small mt-2">
+          Step 1: Hotspot Detection &rarr; Step 3: OSM Match &rarr; Step 4: AI Classify &rarr; Step 6: Risk Engine &rarr; Step 9: Safe Route &rarr; Step 11: Realtime Broadcast
+        </div>
+      </div>
+    `;
+
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+
+    try {
+      const res = await Api.runSihDemoFlow();
+      const inc = res.incident;
+      const ai = res.classification;
+      const risk = res.risk;
+      const fac = res.facility;
+      const routes = res.routes;
+
+      bodyEl.innerHTML = `
+        <div class="alert alert-danger bg-danger bg-opacity-10 border-danger d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h5 class="alert-heading fw-bold mb-1"><i class="bi bi-shield-fill-exclamation me-2"></i>12/12 Pipeline Steps Successfully Executed</h5>
+            <div class="small">SIH Problem Statement SIH26162 Demonstration Completed. New incident registered and broadcast via WebSockets.</div>
+          </div>
+          <span class="badge bg-danger fs-6 px-3 py-2">STATUS: COMPLETE</span>
+        </div>
+
+        <div class="row g-3">
+          <!-- Incident Dossier -->
+          <div class="col-md-6">
+            <div class="card bg-black border-secondary h-100">
+              <div class="card-header bg-dark text-info fw-bold py-2 small">
+                <i class="bi bi-file-earmark-medical me-1"></i> STEP 1, 2, 7: INCIDENT DOSSIER
+              </div>
+              <div class="card-body p-3 small">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Incident ID:</span>
+                  <span class="font-monospace text-light">${inc.incident_number}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Matched Facility:</span>
+                  <span class="text-warning fw-bold">${fac.name}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Coordinates:</span>
+                  <span class="font-monospace text-light">${inc.latitude.toFixed(4)}° N, ${inc.longitude.toFixed(4)}° E</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Initial Triage State:</span>
+                  <span class="badge bg-danger">${inc.status} (Verification Required)</span>
+                </div>
+                <div class="text-muted mt-2 border-top border-secondary pt-2">
+                  <strong>Operator Protocol:</strong> ${inc.operator_notes}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Classification & Explainability -->
+          <div class="col-md-6">
+            <div class="card bg-black border-secondary h-100">
+              <div class="card-header bg-dark text-warning fw-bold py-2 small">
+                <i class="bi bi-robot me-1"></i> STEP 4: 8-CLASS AI CLASSIFIER & XAI
+              </div>
+              <div class="card-body p-3 small">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted">Class Assigned:</span>
+                  <span class="badge bg-danger fs-6">${ai.classification}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <span class="text-muted">Inference Confidence:</span>
+                  <span class="text-info fw-bold">${(ai.confidence * 100).toFixed(0)}% (${ai.model_version})</span>
+                </div>
+                <span class="text-muted d-block mb-1">Explainable AI Attribution Factors:</span>
+                <ul class="mb-0 ps-3 text-secondary">
+                  ${ai.factors.map(f => `<li class="mb-1 text-light">${f}</li>`).join("")}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-factor Risk Score -->
+          <div class="col-md-6">
+            <div class="card bg-black border-secondary h-100">
+              <div class="card-header bg-dark text-danger fw-bold py-2 small">
+                <i class="bi bi-speedometer me-1"></i> STEP 6: RISK ASSESSMENT ENGINE (ISO31000)
+              </div>
+              <div class="card-body p-3 small">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted">Calculated Risk Score:</span>
+                  <span class="badge bg-danger fs-5 px-3">${risk.risk_score} / 100 (${risk.risk_level})</span>
+                </div>
+                <div class="text-light mb-3">${risk.explanation}</div>
+                <div class="row g-2 text-center">
+                  <div class="col-4">
+                    <div class="bg-dark p-2 rounded">
+                      <div class="text-muted" style="font-size:0.65rem;">THERMAL</div>
+                      <strong class="text-danger">${risk.factors.thermal_intensity?.score || 92}</strong>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="bg-dark p-2 rounded">
+                      <div class="text-muted" style="font-size:0.65rem;">PROXIMITY</div>
+                      <strong class="text-danger">${risk.factors.industrial_proximity?.score || 95}</strong>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="bg-dark p-2 rounded">
+                      <div class="text-muted" style="font-size:0.65rem;">POPULATION</div>
+                      <strong class="text-warning">${risk.factors.population_exposure?.score || 78}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Evacuation Corridor -->
+          <div class="col-md-6">
+            <div class="card bg-black border-secondary h-100">
+              <div class="card-header bg-dark text-success fw-bold py-2 small">
+                <i class="bi bi-sign-turn-right me-1"></i> STEP 9: SAFETY ROUTING ENGINE
+              </div>
+              <div class="card-body p-3 small">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Corridor Name:</span>
+                  <span class="text-light fw-bold">${routes.recommended_route.name}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Total Distance:</span>
+                  <span class="text-info">${routes.distance} km</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Estimated Evacuation Time:</span>
+                  <span class="text-warning">${routes.estimated_time} minutes</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Thermal Buffer Avoidance:</span>
+                  <span class="badge bg-success">500m Hazard Zone Cleared</span>
+                </div>
+                <div class="text-muted small mt-2 fst-italic">
+                  ${routes.disclaimer}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Refresh dashboard datasets to display new demo incident immediately
+      await this.refreshData(true);
+    } catch (err) {
+      bodyEl.innerHTML = `<div class="alert alert-danger">Error executing SIH demonstration pipeline: ${err.message}</div>`;
+    }
+  }
+};
+
+// Auto-boot on DOM ready
+document.addEventListener("DOMContentLoaded", () => {
+  App.init();
+});

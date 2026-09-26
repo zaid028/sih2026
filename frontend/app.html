@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIREGUARD AI - Tactical Command Center</title>
+  
+  <!-- CSS Dependencies -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/command_center.css">
+</head>
+<body>
+
+  <!-- Top Tactical Navigation Bar -->
+  <header class="command-navbar">
+    <div class="brand-section">
+      <div class="radar-logo">
+        <i class="bi bi-shield-shaded text-info fs-5"></i>
+      </div>
+      <div>
+        <div class="brand-title">FIREGUARD AI</div>
+        <div class="brand-subtitle">INDUSTRIAL FIRE COMMAND CENTER</div>
+      </div>
+    </div>
+
+    <!-- Live Telemetry & Clocks -->
+    <div class="nav-telemetry d-none d-lg-flex">
+      <div class="telemetry-pill" id="nav-system-status">
+        <span class="pulse-dot"></span>
+        <span>DEMO MODE ACTIVE</span>
+      </div>
+
+      <div class="telemetry-pill">
+        <i class="bi bi-clock-history text-info"></i>
+        <span id="clock-utc">00:00:00 UTC</span>
+        <span class="text-muted">|</span>
+        <span id="clock-ist" class="text-warning">00:00:00 IST</span>
+      </div>
+
+      <div class="telemetry-pill" id="nav-threat-count">
+        <i class="bi bi-radioactive text-danger"></i>
+        <span>0 CRITICAL THREATS</span>
+      </div>
+    </div>
+
+    <!-- Role Switcher & Persona Actions -->
+    <div class="d-flex align-items-center gap-2">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-dark border-secondary text-info" style="font-size: 0.75rem;">
+          <i class="bi bi-person-badge"></i> ROLE:
+        </span>
+        <select class="form-select form-select-sm bg-dark text-light border-secondary" id="demo-role-selector" style="font-size: 0.78rem;">
+          <option value="operator" selected>Operator (Command Cell)</option>
+          <option value="admin">Administrator (NDMA)</option>
+          <option value="facility_manager">Facility Safety Manager</option>
+          <option value="analyst">Geospatial Analyst</option>
+          <option value="public">Public Civilian Observer</option>
+        </select>
+      </div>
+
+      <button class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 py-1 px-2" onclick="App.openUserProfileModal()" title="View User Account & Credentials Details">
+        <i class="bi bi-person-circle"></i>
+        <span id="nav-user-fullname" class="d-none d-lg-inline">Operator</span>
+      </button>
+
+      <button class="btn btn-sm btn-danger d-flex align-items-center gap-1 py-1 px-2 fw-bold" id="btn-run-sih-demo" onclick="App.triggerSihDemoFlow()" title="Trigger Complete 12-Step End-to-End Simulation">
+        <i class="bi bi-play-circle-fill"></i>
+        <span class="d-none d-md-inline">SIH DEMO</span>
+      </button>
+
+      <button class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 py-1 px-2" id="btn-health-monitor" onclick="App.openHealthModal()" title="View Micro-component Health Status">
+        <i class="bi bi-activity"></i>
+        <span class="d-none d-xl-inline">HEALTH</span>
+      </button>
+
+      <a href="/docs" target="_blank" class="btn btn-sm btn-outline-warning d-none d-md-inline-flex py-1 px-2" title="Interactive OpenAPI Docs">
+        <i class="bi bi-file-code"></i> <span class="d-none d-xl-inline">API DOCS</span>
+      </a>
+
+      <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 py-1 px-2 fw-bold" onclick="App.logout()" title="Secure Logout from Terminal">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="d-none d-lg-inline">LOGOUT</span>
+      </button>
+
+      <a href="/" class="btn-tactical btn-sm py-1 d-none d-md-inline-flex" title="Return to Portal">
+        <i class="bi bi-house"></i>
+      </a>
+    </div>
+  </header>
+
+  <!-- Left Tactical Sidebar (11 Navigation Tabs) -->
+  <aside class="command-sidebar">
+    <div>
+      <div class="nav-group-title">COMMAND OPERATIONS</div>
+      <a class="sidebar-nav-item active" data-view="dashboard">
+        <span><i class="bi bi-speedometer2"></i> Dashboard</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="hotspots">
+        <span><i class="bi bi-fire"></i> Live Hotspots</span>
+        <span class="sidebar-badge" id="badge-hotspots-count">12</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="incidents">
+        <span><i class="bi bi-exclamation-octagon"></i> Incidents</span>
+        <span class="sidebar-badge danger" id="badge-incidents-count">9</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="facilities">
+        <span><i class="bi bi-buildings"></i> Industrial Facilities</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="persistent">
+        <span><i class="bi bi-repeat"></i> Persistent Sources</span>
+      </a>
+
+      <div class="nav-group-title mt-3">DECISION & SAFETY INTEL</div>
+      <a class="sidebar-nav-item" data-view="risk">
+        <span><i class="bi bi-cpu"></i> Risk Analysis</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="routes">
+        <span><i class="bi bi-signpost-2"></i> Safety Routes</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="emergency">
+        <span><i class="bi bi-telephone-outbound"></i> Emergency Contacts</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="analytics">
+        <span><i class="bi bi-graph-up-arrow"></i> Analytics</span>
+      </a>
+
+      <div class="nav-group-title mt-3">SYSTEM & CONTROLS</div>
+      <a class="sidebar-nav-item" data-view="alerts">
+        <span><i class="bi bi-bell"></i> Alert Center</span>
+        <span class="sidebar-badge danger" id="badge-alerts-count">3</span>
+      </a>
+      <a class="sidebar-nav-item" data-view="settings">
+        <span><i class="bi bi-gear"></i> Settings</span>
+      </a>
+    </div>
+
+    <!-- User Profile Strip in Sidebar Bottom -->
+    <div class="p-2 rounded mt-3" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); font-size: 0.75rem;">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">ACTIVE PERSONA</span>
+        <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.7rem;" onclick="App.openUserProfileModal()" title="View Account Details">
+          <i class="bi bi-box-arrow-up-right"></i> Details
+        </button>
+      </div>
+      <div class="fw-bold text-light" id="user-name-label">Senior Operator Rao</div>
+      <div class="d-flex justify-content-between align-items-center mt-1">
+        <span class="text-info font-monospace" id="user-role-label">OPERATOR</span>
+        <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.7rem;" onclick="App.logout()" title="Logout">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Tactical Viewport -->
+  <main class="command-viewport">
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: DASHBOARD (Overview & Tactical Map) -->
+    <!-- ========================================== -->
+    <section id="view-dashboard" class="tactical-view">
+      <!-- Top KPI Row -->
+      <div class="row g-3 mb-3">
+        <div class="col-xl-2 col-md-4 col-6">
+          <div class="tactical-card p-3">
+            <div class="kpi-label">Active Hotspots</div>
+            <div class="kpi-number text-info" id="kpi-total-hotspots">--</div>
+            <span class="text-muted" style="font-size: 0.7rem;">NASA FIRMS (MODIS/VIIRS)</span>
+          </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+          <div class="tactical-card p-3">
+            <div class="kpi-label">Industrial Fires</div>
+            <div class="kpi-number text-danger" id="kpi-industrial-fires">--</div>
+            <span class="text-muted" style="font-size: 0.7rem;">Uncontrolled Facilities</span>
+          </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+          <div class="tactical-card p-3">
+            <div class="kpi-label">High-Risk Incidents</div>
+            <div class="kpi-number text-warning" id="kpi-high-risk">--</div>
+            <span class="text-muted" style="font-size: 0.7rem;">Action Required</span>
+          </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+          <div class="tactical-card p-3">
+            <div class="kpi-label">Persistent Sources</div>
+            <div class="kpi-number text-purple" style="color: #A855F7;" id="kpi-persistent-sources">--</div>
+            <span class="text-muted" style="font-size: 0.7rem;">Flares & Furnaces</span>
+          </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+          <div class="tactical-card p-3">
+            <div class="kpi-label">Avg Response Time</div>
+            <div class="kpi-number text-success" id="kpi-avg-response">14.2m</div>
+            <span class="text-muted" style="font-size: 0.7rem;">Detection to Alert</span>
+          </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6">
+          <div class="tactical-card p-3">
+            <div class="kpi-label">FIRMS Accuracy</div>
+            <div class="kpi-number text-info">94.6%</div>
+            <span class="text-muted" style="font-size: 0.7rem;">ML Correlation Rate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Map & Live Threat Column -->
+      <div class="row g-3">
+        <div class="col-xl-9 col-lg-8">
+          <div class="tactical-card p-2" style="position: relative;">
+            <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+              <div class="card-title-tactical">
+                <i class="bi bi-radar"></i> Live Satellite Thermal Hotspot Radar
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn-tactical btn-sm py-0" onclick="TacticalMap.setBaseLayer('dark')">Dark Tactical</button>
+                <button class="btn-tactical btn-sm py-0" onclick="TacticalMap.setBaseLayer('satellite')">Satellite</button>
+                <button class="btn-tactical btn-sm py-0" onclick="TacticalMap.setBaseLayer('streets')">OSM</button>
+                <button class="btn-tactical btn-sm py-0" onclick="App.refreshData()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+              </div>
+            </div>
+
+            <!-- Leaflet Map Container -->
+            <div id="tactical-map-container">
+              <div class="map-floating-hud">
+                <span><i class="bi bi-crosshair"></i> <span id="hud-coordinates">22.3854° N, 69.8712° E</span></span>
+                <span>&bull;</span>
+                <span>MODIS / VIIRS REALTIME FEED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Incident Command Ticker -->
+        <div class="col-xl-3 col-lg-4">
+          <div class="tactical-card h-100 p-3 d-flex flex-column">
+            <div class="card-title-tactical mb-2">
+              <i class="bi bi-bell-fill text-danger"></i> Active High-Risk Threats
+            </div>
+            <div class="flex-grow-1 overflow-auto" id="dashboard-active-threats" style="max-height: 540px;">
+              <!-- Dynamic Cards populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: LIVE HOTSPOTS CATALOG -->
+    <!-- ========================================== -->
+    <section id="view-hotspots" class="tactical-view" style="display: none;">
+      <div class="tactical-card p-3 mb-3">
+        <div class="card-title-tactical mb-2">
+          <i class="bi bi-funnel"></i> Tactical Hotspot Filters & Satellite Feeds
+        </div>
+        <div class="row g-2 align-items-center">
+          <div class="col-md-3 col-6">
+            <label class="form-label text-muted mb-1" style="font-size: 0.72rem;">SATELLITE SENSOR</label>
+            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="filter-hotspots-sat">
+              <option value="">All Sensors (VIIRS + MODIS)</option>
+              <option value="VIIRS_SNPP">VIIRS S-NPP</option>
+              <option value="VIIRS_NOAA20">VIIRS NOAA-20</option>
+              <option value="VIIRS_NOAA21">VIIRS NOAA-21</option>
+              <option value="MODIS_Terra">MODIS Terra</option>
+              <option value="MODIS_Aqua">MODIS Aqua</option>
+            </select>
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label text-muted mb-1" style="font-size: 0.72rem;">MIN CONFIDENCE (<span id="filter-conf-val">0%</span>)</label>
+            <input type="range" class="form-range" id="filter-hotspots-conf" min="0" max="95" value="0">
+          </div>
+          <div class="col-md-3 col-6 d-flex align-items-center gap-3 pt-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="filter-hotspots-industrial">
+              <label class="form-check-label text-light" style="font-size: 0.78rem;" for="filter-hotspots-industrial">Industrial Only</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="filter-hotspots-persist">
+              <label class="form-check-label text-light" style="font-size: 0.78rem;" for="filter-hotspots-persist">Persistent Only</label>
+            </div>
+          </div>
+          <div class="col-md-3 col-6 text-end pt-3">
+            <button class="btn-tactical btn-sm" onclick="SettingsView.syncNow()">
+              <i class="bi bi-cloud-arrow-down"></i> Sync NASA FIRMS Feed
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tactical-card p-3">
+        <div class="card-title-tactical mb-2">
+          <i class="bi bi-table"></i> Satellite Thermal Telemetry Register
+        </div>
+        <div class="table-responsive">
+          <table class="table table-tactical">
+            <thead>
+              <tr>
+                <th>Hotspot ID</th>
+                <th>Coordinates</th>
+                <th>Satellite Sensor</th>
+                <th>FRP (MW)</th>
+                <th>Brightness</th>
+                <th>Confidence</th>
+                <th>Risk Tier</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hotspots-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: INCIDENTS COMMAND & TRIAGE -->
+    <!-- ========================================== -->
+    <section id="view-incidents" class="tactical-view" style="display: none;">
+      <div class="tactical-card p-3 mb-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4">
+            <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" id="incident-search-input" placeholder="Search by incident ID, title, facility...">
+          </div>
+          <div class="col-md-3 col-6">
+            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="incident-status-filter">
+              <option value="">All Incident States</option>
+              <option value="REPORTED">REPORTED</option>
+              <option value="VERIFIED">VERIFIED</option>
+              <option value="DISPATCH_REQUIRED">DISPATCH REQUIRED</option>
+              <option value="IN_PROGRESS">IN PROGRESS</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="FALSE_ALARM">FALSE ALARM</option>
+            </select>
+          </div>
+          <div class="col-md-3 col-6">
+            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="incident-risk-filter">
+              <option value="">All Risk Tiers</option>
+              <option value="CRITICAL">CRITICAL</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MODERATE">MODERATE</option>
+              <option value="LOW">LOW</option>
+            </select>
+          </div>
+          <div class="col-md-2 text-end">
+            <button class="btn btn-outline-info btn-sm w-100" onclick="alert('Incident register exported to CSV.')">
+              <i class="bi bi-download"></i> Export CSV
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tactical-card p-3">
+        <div class="card-title-tactical mb-2">
+          <i class="bi bi-exclamation-diamond"></i> Active Incident Command Triage Register
+        </div>
+        <div class="table-responsive">
+          <table class="table table-tactical">
+            <thead>
+              <tr>
+                <th>Incident ID</th>
+                <th>Detection Time</th>
+                <th>Incident Title & Facility</th>
+                <th>Classification</th>
+                <th>Risk Score</th>
+                <th>Status</th>
+                <th>Tactical Actions</th>
+              </tr>
+            </thead>
+            <tbody id="incidents-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: INDUSTRIAL FACILITIES INTELLIGENCE -->
+    <!-- ========================================== -->
+    <section id="view-facilities" class="tactical-view" style="display: none;">
+      <div class="tactical-card p-3 mb-3">
+        <div class="card-title-tactical mb-1">
+          <i class="bi bi-buildings"></i> Monitored Industrial Facilities & High-Hazard Complexes
+        </div>
+        <p class="text-muted mb-0" style="font-size: 0.78rem;">
+          Geospatial facility polygons synchronized with OpenStreetMap (OSM) and Overpass APIs across India's key industrial hubs.
+        </p>
+      </div>
+
+      <div class="row g-3" id="facilities-grid-container">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 5: PERSISTENT THERMAL SOURCES -->
+    <!-- ========================================== -->
+    <section id="view-persistent" class="tactical-view" style="display: none;">
+      <div id="persistent-spike-banner" class="alert alert-danger mb-3" style="display: none;"></div>
+
+      <div class="tactical-card p-3 mb-3">
+        <div class="card-title-tactical mb-1">
+          <i class="bi bi-repeat"></i> Persistent Industrial Thermal Sources & Flare Baselines
+        </div>
+        <p class="text-muted mb-0" style="font-size: 0.78rem;">
+          Multi-temporal spatiotemporal clustering distinguishes normal 24/7 industrial heating (blast furnaces, cement kilns, refinery flaring) from acute emergency fires, and detects emission spikes exceeding 2.5 sigma.
+        </p>
+      </div>
+
+      <div class="tactical-card p-3">
+        <div class="table-responsive">
+          <table class="table table-tactical">
+            <thead>
+              <tr>
+                <th>Cluster ID</th>
+                <th>Coordinates</th>
+                <th>Correlated Facility</th>
+                <th>Recurrence Count</th>
+                <th>Observation Window</th>
+                <th>Mean FRP</th>
+                <th>Classification</th>
+                <th>Operational Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="persistent-sources-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 6: RISK ANALYSIS & EXPLAINABLE AI -->
+    <!-- ========================================== -->
+    <section id="view-risk" class="tactical-view" style="display: none;">
+      <div class="tactical-card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div class="card-title-tactical mb-1">
+              <i class="bi bi-cpu"></i> Explainable AI Risk Engine (0 - 100)
+            </div>
+            <p class="text-muted mb-0" style="font-size: 0.78rem;">
+              Transparent multi-factor synthesis providing plain-language explanations to disaster management authorities.
+            </p>
+          </div>
+          <div style="min-width: 280px;">
+            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="risk-incident-select">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="risk-analysis-container">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 7: SAFETY ROUTES & EVACUATION -->
+    <!-- ========================================== -->
+    <section id="view-routes" class="tactical-view" style="display: none;">
+      <div class="tactical-card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div class="card-title-tactical mb-1">
+              <i class="bi bi-signpost-2"></i> Dynamic Safety Corridors & Hazard Buffer Avoidance
+            </div>
+            <p class="text-muted mb-0" style="font-size: 0.78rem;">
+              Calculates safe evacuation paths steering outside the 500m thermal blast circle and 1.5km toxic plume perimeter.
+            </p>
+          </div>
+          <div style="min-width: 280px;">
+            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="routes-incident-select">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="route-plan-details">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 8: EMERGENCY CONTACTS & DISPATCH SIM -->
+    <!-- ========================================== -->
+    <section id="view-emergency" class="tactical-view" style="display: none;">
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="tactical-card p-3 mb-3">
+            <div class="card-title-tactical mb-2">
+              <i class="bi bi-telephone-inbound"></i> Emergency Response Agency Directory
+            </div>
+            <div id="emergency-contacts-list" style="max-height: 480px; overflow-y: auto;">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="tactical-card p-3">
+            <div class="card-title-tactical mb-2">
+              <i class="bi bi-broadcast"></i> Simulated Multi-Agency Emergency Alert Dispatcher
+            </div>
+            <p class="text-muted" style="font-size: 0.78rem;">
+              Generates a standardized emergency payload formatted for NDRF tactical operations, state fire command, and plant safety leads.
+            </p>
+
+            <div class="mb-3">
+              <label class="form-label text-muted" style="font-size: 0.75rem;">TARGET EMERGENCY INCIDENT</label>
+              <select class="form-select form-select-sm bg-dark text-light border-secondary" id="dispatch-incident-select">
+                <!-- Populated via JS -->
+              </select>
+            </div>
+
+            <button class="btn btn-danger w-100 py-2 fw-bold text-uppercase" onclick="EmergencyView.triggerDispatch()" style="font-size: 0.85rem; letter-spacing: 0.06em;">
+              <i class="bi bi-send-fill"></i> Simulate Emergency Alert Broadcast
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 9: ANALYTICS DASHBOARD (Chart.js) -->
+    <!-- ========================================== -->
+    <section id="view-analytics" class="tactical-view" style="display: none;">
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="tactical-card p-3">
+            <div class="card-title-tactical mb-2">
+              <i class="bi bi-pie-chart"></i> Fire Classification Distribution (8 Classes)
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="chart-classification"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="tactical-card p-3">
+            <div class="card-title-tactical mb-2">
+              <i class="bi bi-activity"></i> 24-Hour Hotspot & Industrial Fire Trends
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="chart-trend"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="tactical-card p-3">
+            <div class="card-title-tactical mb-2">
+              <i class="bi bi-bar-chart"></i> Incident Breakdown by Risk Tier
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="chart-risk"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="tactical-card p-3">
+            <div class="card-title-tactical mb-2">
+              <i class="bi bi-geo-alt"></i> Regional Hotspot Distribution
+            </div>
+            <div style="height: 280px; position: relative;">
+              <canvas id="chart-regional"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 10: ALERT CENTER -->
+    <!-- ========================================== -->
+    <section id="view-alerts" class="tactical-view" style="display: none;">
+      <div class="tactical-card p-3 mb-3">
+        <div class="card-title-tactical mb-1">
+          <i class="bi bi-bell-fill"></i> Real-Time Emergency Notification Center
+        </div>
+        <p class="text-muted mb-0" style="font-size: 0.78rem;">
+          High-priority alerts dispatched automatically upon critical thermal anomaly detection.
+        </p>
+      </div>
+
+      <div id="alerts-feed-container">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 11: SETTINGS & DEMO CONTROLS -->
+    <!-- ========================================== -->
+    <section id="view-settings" class="tactical-view" style="display: none;">
+      <div class="tactical-card p-4" style="max-width: 700px;">
+        <div class="card-title-tactical mb-3">
+          <i class="bi bi-sliders"></i> Platform Settings & External API Keys
+        </div>
+
+        <div class="mb-4">
+          <div class="form-check form-switch mb-1">
+            <input class="form-check-input" type="checkbox" id="settings-demo-toggle">
+            <label class="form-check-label text-light fw-bold" for="settings-demo-toggle">Demo Mode (Synthetic High-Fidelity Data)</label>
+          </div>
+          <span class="text-muted" style="font-size: 0.75rem;">
+            When enabled, the system uses high-fidelity realistic industrial hotspot data for Jamnagar, Dahej, Vizag, Chembur, and Manali.
+          </span>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label text-light fw-bold mb-1" style="font-size: 0.82rem;">NASA FIRMS API KEY (MAP_KEY)</label>
+          <input type="password" class="form-control bg-dark text-light border-secondary" id="settings-firms-key" placeholder="Enter your NASA FIRMS MAP_KEY">
+          <span class="text-muted" style="font-size: 0.75rem;">
+            Get a free MAP_KEY at <a href="https://firms.modaps.eosdis.nasa.gov/api/map_key" target="_blank" class="text-info">NASA FIRMS API Key Portal</a>. Disabling Demo Mode with a valid key connects to live satellite feeds.
+          </span>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label text-light fw-bold mb-1" style="font-size: 0.82rem;">OPENSTREETMAP OVERPASS ENDPOINT</label>
+          <input type="text" class="form-control bg-dark text-light border-secondary" id="settings-overpass-endpoint" value="https://overpass-api.de/api/interpreter">
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" onclick="SettingsView.save()">
+            <i class="bi bi-save"></i> Save Settings
+          </button>
+          <button class="btn btn-outline-info" onclick="SettingsView.syncNow()">
+            <i class="bi bi-arrow-repeat"></i> Trigger Immediate Satellite Ingestion
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL: INCIDENT COMMAND DOSSIER -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="incidentDossierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="font-monospace text-info fs-6" id="dossier-id">INC-XXXX</span>
+              <span id="dossier-risk-badge" class="badge-risk critical">CRITICAL</span>
+              <span id="dossier-status-badge" class="badge bg-secondary text-uppercase" style="font-size: 0.7rem;">REPORTED</span>
+            </div>
+            <h5 class="modal-title text-light fw-bold" id="dossier-title">Incident Title</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body" id="dossier-body-content">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="modal-footer modal-tactical-footer d-flex justify-content-between flex-wrap gap-2">
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn-tactical btn-sm" onclick="IncidentModal.setStatus('VERIFIED')">
+              <i class="bi bi-check-circle"></i> Mark Verified
+            </button>
+            <button class="btn-tactical btn-sm danger" onclick="IncidentModal.setStatus('DISPATCH_REQUIRED')">
+              <i class="bi bi-exclamation-triangle"></i> Dispatch Required
+            </button>
+            <button class="btn-tactical btn-sm success" onclick="IncidentModal.setStatus('RESOLVED')">
+              <i class="bi bi-shield-check"></i> Incident Resolved
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="IncidentModal.setStatus('FALSE_ALARM')">
+              <i class="bi bi-x-circle"></i> False Alarm
+            </button>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-danger btn-sm fw-bold" onclick="IncidentModal.triggerSimulatedDispatch()">
+              <i class="bi bi-broadcast"></i> Dispatch Alert
+            </button>
+            <button class="btn btn-info btn-sm fw-bold text-dark" onclick="IncidentModal.openSafetyRoute()">
+              <i class="bi bi-signpost-2"></i> Safety Route
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: SIMULATED DISPATCH PAYLOAD -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="dispatchSimModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header">
+          <h5 class="modal-title text-light fw-bold"><i class="bi bi-broadcast text-danger"></i> Multi-Agency Dispatch Broadcast</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="dispatch-sim-body">
+          <!-- Rendered via JS -->
+        </div>
+        <div class="modal-footer modal-tactical-footer">
+          <button class="btn btn-outline-info btn-sm" onclick="EmergencyView.copyBroadcastText()">
+            <i class="bi bi-clipboard"></i> Copy Coordinates & Payload
+          </button>
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: FACILITY DEEP PROFILE -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="facilityDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header">
+          <h5 class="modal-title text-light fw-bold" id="facility-modal-title">Facility Profile</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="facility-modal-body">
+          <!-- Rendered via JS -->
+        </div>
+        <div class="modal-footer modal-tactical-footer">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: MOBILE SAFETY / EVACUATION MODE -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="mobileSafetyModeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content bg-dark" id="mobile-safety-modal-body">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: API HEALTH MONITOR (Requirement 26) -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="healthMonitorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header">
+          <h5 class="modal-title text-light fw-bold">
+            <i class="bi bi-activity text-info me-2"></i> API Platform Health Monitor
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="health-modal-body">
+          <!-- Rendered via JS -->
+        </div>
+        <div class="modal-footer modal-tactical-footer">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: SIH DEMO FLOW RESULT (Requirement 25) -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="sihDemoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header bg-danger bg-opacity-25">
+          <h5 class="modal-title text-danger fw-bold">
+            <i class="bi bi-cpu-fill text-danger me-2"></i> SIH Problem Statement SIH26162 — 12-Step End-to-End Execution
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="sih-demo-modal-body">
+          <!-- Rendered via JS -->
+        </div>
+        <div class="modal-footer modal-tactical-footer">
+          <button class="btn btn-danger btn-sm" data-bs-dismiss="modal" onclick="Router.navigate('incidents')">View in Incident Command</button>
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: USER PROFILE & CREDENTIALS DETAILS -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header bg-info bg-opacity-10">
+          <h5 class="modal-title text-info fw-bold">
+            <i class="bi bi-person-badge-fill me-2"></i> Operator Profile & Credentials Dossier
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="user-profile-modal-body">
+          <div class="row g-3">
+            
+            <!-- User Summary Card -->
+            <div class="col-md-5">
+              <div class="tactical-card p-3 text-center h-100" style="background: rgba(15, 23, 42, 0.9);">
+                <div class="d-inline-flex justify-content-center align-items-center rounded-circle mb-3" style="width: 80px; height: 80px; background: rgba(56, 189, 248, 0.15); border: 2px solid #38BDF8;">
+                  <i class="bi bi-person-vcard text-info fs-1"></i>
+                </div>
+                <h5 class="fw-bold text-light mb-1" id="profile-full-name">Commander Rajesh Sharma</h5>
+                <div class="badge bg-warning text-dark font-monospace mb-2" id="profile-role-badge">OPERATOR</div>
+                <div class="text-muted small" id="profile-agency">State Emergency Operation Center (SEOC) Gujarat</div>
+                
+                <hr class="border-secondary my-3">
+                
+                <div class="text-start small">
+                  <div class="mb-2">
+                    <span class="text-muted d-block" style="font-size: 0.7rem;">TERMINAL USERNAME:</span>
+                    <strong class="text-info font-monospace" id="profile-username">operator</strong>
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted d-block" style="font-size: 0.7rem;">OFFICIAL DISPATCH EMAIL:</span>
+                    <span class="text-light" id="profile-email">operator@fireguard.gov.in</span>
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted d-block" style="font-size: 0.7rem;">SECURE HOTLINE:</span>
+                    <span class="text-warning font-monospace" id="profile-phone">+91 79 2325 1900</span>
+                  </div>
+                  <div>
+                    <span class="text-muted d-block" style="font-size: 0.7rem;">SESSION STATUS:</span>
+                    <span class="badge bg-success"><i class="bi bi-shield-check"></i> JWT AUTHENTICATED</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Role Permissions & Clearance Matrix -->
+            <div class="col-md-7">
+              <div class="tactical-card p-3 h-100" style="background: rgba(15, 23, 42, 0.9);">
+                <div class="card-title-tactical mb-2">
+                  <i class="bi bi-key-fill text-warning"></i> Role-Based Access Control (RBAC) Clearance
+                </div>
+                <p class="text-muted small mb-3">
+                  This user terminal holds certified clearance according to NDMA National Industrial Fire Safety Directive:
+                </p>
+
+                <div class="list-group list-group-flush bg-transparent small mb-3">
+                  <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check-circle-fill text-success me-2"></i> Real-time FIRMS Satellite Ingestion</span>
+                    <span class="badge bg-dark text-info border border-secondary">AUTHORIZED</span>
+                  </div>
+                  <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check-circle-fill text-success me-2"></i> Multi-Agency Tactical Dispatch Simulation</span>
+                    <span class="badge bg-dark text-info border border-secondary">AUTHORIZED</span>
+                  </div>
+                  <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check-circle-fill text-success me-2"></i> Incident Lifecycle State Transitions</span>
+                    <span class="badge bg-dark text-info border border-secondary">AUTHORIZED</span>
+                  </div>
+                  <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check-circle-fill text-success me-2"></i> Dynamic Safe Corridor Computation</span>
+                    <span class="badge bg-dark text-info border border-secondary">AUTHORIZED</span>
+                  </div>
+                  <div class="list-group-item bg-transparent text-light border-secondary border-opacity-25 px-0 py-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-check-circle-fill text-success me-2"></i> Explainable AI (XAI) Attribution Logs</span>
+                    <span class="badge bg-dark text-info border border-secondary">AUTHORIZED</span>
+                  </div>
+                </div>
+
+                <div class="p-2 rounded" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); font-size: 0.72rem;">
+                  <strong class="text-info"><i class="bi bi-info-circle"></i> Terminal Security Note:</strong>
+                  <div class="text-muted">Session is cryptographically signed using JWT Bearer token and automatically verified on each backend REST call.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="modal-footer modal-tactical-footer d-flex justify-content-between">
+          <a href="/login" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i> Switch User / Re-login
+          </a>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-danger btn-sm" onclick="App.logout()">
+              <i class="bi bi-box-arrow-right me-1"></i> Log Out
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vendor JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Application JS Modules -->
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/router.js"></script>
+  
+  <!-- Views -->
+  <script src="js/views/dashboard_view.js"></script>
+  <script src="js/views/hotspots_view.js"></script>
+  <script src="js/views/incidents_view.js"></script>
+  <script src="js/views/incident_modal.js"></script>
+  <script src="js/views/facilities_view.js"></script>
+  <script src="js/views/persistent_view.js"></script>
+  <script src="js/views/risk_view.js"></script>
+  <script src="js/views/routing_view.js"></script>
+  <script src="js/views/emergency_view.js"></script>
+  <script src="js/views/analytics_view.js"></script>
+  <script src="js/views/alerts_view.js"></script>
+  <script src="js/views/settings_view.js"></script>
+
+  <!-- Bootstrap App -->
+  <script src="js/app.js"></script>
+</body>
+</html>

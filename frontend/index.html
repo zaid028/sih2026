@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIREGUARD AI | Industrial Fire & Thermal Source Command Center</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/command_center.css">
+  <link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="landing-body">
+
+  <!-- Top Header Navigation -->
+  <nav class="navbar navbar-expand-lg landing-nav fixed-top">
+    <div class="container-fluid px-lg-5">
+      <a class="navbar-brand brand-section" href="/">
+        <div class="radar-logo">
+          <i class="bi bi-shield-shaded text-info fs-5"></i>
+        </div>
+        <div>
+          <div class="brand-title">FIREGUARD AI</div>
+          <div class="brand-subtitle">SIH Problem Statement SIH26162</div>
+        </div>
+      </a>
+
+      <button class="navbar-toggler border-secondary text-light" type="button" data-bs-toggle="collapse" data-bs-target="#landingNavbar">
+        <i class="bi bi-list fs-3"></i>
+      </button>
+
+      <div class="collapse navbar-collapse" id="landingNavbar">
+        <ul class="navbar-nav ms-auto align-items-center gap-3">
+          <li class="nav-item">
+            <a class="nav-link text-light" href="#problem-statement">Problem Statement</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href="#capabilities">Capabilities</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href="#architecture">Architecture</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light" href="#credentials">Demo Guide</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-info fw-bold" href="/login">
+              <i class="bi bi-box-arrow-in-right"></i> Terminal Sign In
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="btn-command-launch" href="/app">
+              <i class="bi bi-terminal-fill"></i> Open Live Command Center
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Live Threat Ticker -->
+  <div class="live-ticker-bar fixed-top" style="top: 70px; z-index: 1020;">
+    <div class="container-fluid px-lg-5 d-flex justify-content-between align-items-center">
+      <div>
+        <span class="pulse-dot d-inline-block me-2"></span>
+        <strong class="text-danger me-2">[LIVE RADAR]</strong>
+        <span>MONITORING INDUSTRIAL CORRIDORS: Jamnagar (Reliance/Nayara), Dahej PCPIR, Vizag Industrial Corridor, Chembur Mumbai, Manali Chennai</span>
+      </div>
+      <div class="d-none d-md-block text-muted" style="font-size: 0.75rem;">
+        NASA FIRMS (MODIS/VIIRS) &bull; OSM OVERPASS INTEGRATION
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <header class="hero-section text-center" style="margin-top: 105px;">
+    <div class="hero-grid-pattern"></div>
+    <div class="container position-relative">
+      <div class="hero-badge">
+        <i class="bi bi-patch-check-fill text-info"></i>
+        SIH 2026 OFFICIAL SOLUTION &bull; DISASTER MANAGEMENT & INDUSTRIAL SAFETY
+      </div>
+
+      <h1 class="hero-title">
+        AI-Based Detection & Classification of <br>
+        <span class="hero-highlight">Industrial Fires & Persistent Thermal Sources</span>
+      </h1>
+
+      <p class="hero-lead">
+        A mission-critical emergency command platform combining real-time <strong>NASA FIRMS</strong> satellite feeds, 
+        <strong>OpenStreetMap (OSM)</strong> facility intelligence, <strong>8-class AI machine learning</strong>, explainable risk scoring, 
+        and dynamic <strong>safety routing avoiding toxic hazard zones</strong>.
+      </p>
+
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="/app" class="btn-command-launch fs-5 py-3 px-4">
+          <i class="bi bi-display"></i> Launch Tactical Command Center
+        </a>
+        <a href="#architecture" class="btn btn-outline-info py-3 px-4 fw-bold">
+          <i class="bi bi-diagram-3"></i> Inspect Technical Pipeline
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Problem Statement Overview -->
+  <section id="problem-statement" class="py-5 border-bottom border-secondary border-opacity-25">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-6">
+          <div class="badge bg-danger bg-opacity-25 text-danger border border-danger px-3 py-1 mb-2 text-uppercase font-monospace">
+            Challenge SIH26162
+          </div>
+          <h2 class="fw-bold text-light mb-3">Why Raw Satellite Hotspots Are Not Enough</h2>
+          <p class="text-muted" style="line-height: 1.7;">
+            Raw NASA FIRMS feeds detect thousands of thermal anomalies daily across India. However, authorities face a critical visibility gap:
+            <strong>an uncontrolled chemical refinery inferno looks identical in raw coordinates to an authorized blast furnace, a gas flare stack, or agricultural stubble burning.</strong>
+          </p>
+          <p class="text-muted" style="line-height: 1.7;">
+            <strong>FIREGUARD AI</strong> eliminates this ambiguity by cross-referencing satellite radiative power (FRP) with OpenStreetMap industrial boundaries, multi-week temporal persistence, and an 8-class AI classification model—delivering instantaneous actionable intelligence to NDRF, State Disaster Cells, and plant safety commanders.
+          </p>
+        </div>
+        <div class="col-lg-6">
+          <div class="tactical-card p-4">
+            <h5 class="card-title-tactical mb-3"><i class="bi bi-check2-circle"></i> Complete SIH26162 Compliance Matrix</h5>
+            <ul class="list-unstyled text-light mb-0" style="font-size: 0.85rem; line-height: 1.8;">
+              <li><i class="bi bi-check-lg text-info me-2"></i> <strong>Real-time NASA FIRMS Integration:</strong> Direct API connector with zero-config realistic fallback.</li>
+              <li><i class="bi bi-check-lg text-info me-2"></i> <strong>OSM Facility Geocoding:</strong> Automated proximity detection for refineries, chemical plants, and steel mills.</li>
+              <li><i class="bi bi-check-lg text-info me-2"></i> <strong>8-Class AI Fire Classifier:</strong> Distinguishes industrial fires from routine flares, forests, and false positives.</li>
+              <li><i class="bi bi-check-lg text-info me-2"></i> <strong>Persistent Source Clustering:</strong> Recurrence tracking to isolate routine industrial heating and flag abnormal spikes.</li>
+              <li><i class="bi bi-check-lg text-info me-2"></i> <strong>Explainable Risk Engine (0-100):</strong> Transparent multi-factor scoring with clear causal justifications.</li>
+              <li><i class="bi bi-check-lg text-info me-2"></i> <strong>Dynamic Evacuation Routing:</strong> Red/Yellow/Green corridors avoiding 500m blast and 1.5km smoke zones.</li>
+              <li><i class="bi bi-check-lg text-info me-2"></i> <strong>Zero React Overhead:</strong> Pure modern Vanilla JS, Leaflet, Bootstrap 5, and Chart.js.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical Pipeline / Architecture -->
+  <section id="architecture" class="py-5 border-bottom border-secondary border-opacity-25" style="background: rgba(11, 19, 36, 0.4);">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="fw-bold text-light">End-to-End Operational Data Pipeline</h2>
+        <p class="text-muted">How raw satellite telemetry transitions into frontline emergency response</p>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-lg-3 col-md-6">
+          <div class="pipeline-step-box h-100">
+            <div class="pipeline-step-num">Step 01</div>
+            <i class="bi bi-satellite text-info fs-3 my-2 d-block"></i>
+            <h6 class="text-light fw-bold">Satellite Ingestion</h6>
+            <p class="text-muted" style="font-size: 0.78rem;">
+              Ingests MODIS & VIIRS telemetry: latitude, longitude, brightness, and Fire Radiative Power (MW).
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="pipeline-step-box h-100">
+            <div class="pipeline-step-num">Step 02</div>
+            <i class="bi bi-buildings text-warning fs-3 my-2 d-block"></i>
+            <h6 class="text-light fw-bold">OSM Spatial Correlator</h6>
+            <p class="text-muted" style="font-size: 0.78rem;">
+              Performs real-time geospatial buffering against OpenStreetMap industrial polygons and hazard tiers.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="pipeline-step-box h-100">
+            <div class="pipeline-step-num">Step 03</div>
+            <i class="bi bi-cpu text-primary fs-3 my-2 d-block"></i>
+            <h6 class="text-light fw-bold">AI Classification Engine</h6>
+            <p class="text-muted" style="font-size: 0.78rem;">
+              Evaluates 8 operational classes, temporal recurrence, and calculates an explainable risk score (0-100).
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="pipeline-step-box h-100">
+            <div class="pipeline-step-num">Step 04</div>
+            <i class="bi bi-shield-check text-success fs-3 my-2 d-block"></i>
+            <h6 class="text-light fw-bold">Safe Evacuation & Dispatch</h6>
+            <p class="text-muted" style="font-size: 0.78rem;">
+              Calculates dynamic safe evacuation corridors steering around the 500m danger zone to the nearest hospital.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Capabilities Grid -->
+  <section id="capabilities" class="py-5">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="fw-bold text-light">Tactical Command Capabilities</h2>
+        <p class="text-muted">Built to operational standards used by disaster authorities and facility managers</p>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-map-fill"></i>
+            </div>
+            <h5 class="text-light fw-bold">Interactive Geospatial Command Map</h5>
+            <p class="text-muted" style="font-size: 0.85rem;">
+              Leaflet.js tactical map with satellite imagery, dark basemaps, pulsing threat markers, industrial asset perimeters, and live coordinate HUD.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-fire"></i>
+            </div>
+            <h5 class="text-light fw-bold">8-Class AI Fire Classification</h5>
+            <p class="text-muted" style="font-size: 0.85rem;">
+              Distinguishes between industrial fires, gas flares, persistent furnaces, forest fires, agricultural burning, waste fires, and solar glint false positives.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-repeat"></i>
+            </div>
+            <h5 class="text-light fw-bold">Persistent Thermal Detection</h5>
+            <p class="text-muted" style="font-size: 0.85rem;">
+              Multi-temporal recurrence clustering over days and weeks. Automatically flags abnormal flare spikes when a routine source exceeds 2.5 sigma.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-speedometer"></i>
+            </div>
+            <h5 class="text-light fw-bold">Explainable AI Risk Scoring (0–100)</h5>
+            <p class="text-muted" style="font-size: 0.85rem;">
+              Transparent causal attribution showing exactly why an incident was designated Low, Moderate, High, or Critical, considering population and lifelines.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-signpost-split-fill"></i>
+            </div>
+            <h5 class="text-light fw-bold">Dynamic Evacuation Routing</h5>
+            <p class="text-muted" style="font-size: 0.85rem;">
+              Generates color-coded safe corridors (Green) that avoid active 500m blast and 1.5km toxic plume perimeters (Red) to the nearest trauma hospital.
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <i class="bi bi-broadcast"></i>
+            </div>
+            <h5 class="text-light fw-bold">Multi-Agency Dispatch Simulation</h5>
+            <p class="text-muted" style="font-size: 0.85rem;">
+              Constructs standardized emergency alert payloads with copyable coordinates and simulated radio/SMS broadcast to NDRF, Fire Services, and Plant Safety Leads.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Credentials & Evaluator Guide -->
+  <section id="credentials" class="py-5 border-top border-secondary border-opacity-25" style="background: rgba(11, 19, 36, 0.6);">
+    <div class="container">
+      <div class="tactical-card p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+          <div>
+            <span class="badge bg-info text-dark font-monospace text-uppercase mb-1">Evaluator Quick Guide</span>
+            <h4 class="text-light fw-bold mb-0">Role-Based Personas & Credentials</h4>
+          </div>
+          <span class="badge bg-success px-3 py-2 fs-6">
+            <i class="bi bi-lightning-charge-fill"></i> Instant Role Switcher Enabled in Top Bar
+          </span>
+        </div>
+
+        <p class="text-muted" style="font-size: 0.85rem;">
+          To test how different stakeholders interact with the command center during an industrial disaster, you can switch personas with a single click in the top navigation bar or log in with these demo credentials:
+        </p>
+
+        <div class="table-responsive">
+          <table class="table table-tactical mb-0">
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Username</th>
+                <th>Password</th>
+                <th>Designation / Agency</th>
+                <th>Permitted Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge bg-danger">ADMIN</span></td>
+                <td class="font-monospace text-info">admin</td>
+                <td class="font-monospace">Admin@123</td>
+                <td>National Disaster Management Authority (NDMA)</td>
+                <td>Full system control, verify classifications, trigger multi-agency dispatches</td>
+              </tr>
+              <tr>
+                <td><span class="badge bg-warning text-dark">OPERATOR</span></td>
+                <td class="font-monospace text-info">operator</td>
+                <td class="font-monospace">Operator@123</td>
+                <td>Emergency Operations Center (EOC) Controller</td>
+                <td>Triage live hotspots, update incident lifecycle, compute evacuation corridors</td>
+              </tr>
+              <tr>
+                <td><span class="badge bg-primary">FACILITY MANAGER</span></td>
+                <td class="font-monospace text-info">manager</td>
+                <td class="font-monospace">Manager@123</td>
+                <td>VP Health, Safety & Environment (Jamnagar Refinery)</td>
+                <td>Monitor plant boundary hotspots, review flare baselines, update plant emergency contacts</td>
+              </tr>
+              <tr>
+                <td><span class="badge bg-info text-dark">ANALYST</span></td>
+                <td class="font-monospace text-info">analyst</td>
+                <td class="font-monospace">Analyst@123</td>
+                <td>Geospatial Analytics Directorate</td>
+                <td>Inspect recurrent thermal trends, Chart.js metrics, and XAI factor weights</td>
+              </tr>
+              <tr>
+                <td><span class="badge bg-secondary">PUBLIC</span></td>
+                <td class="font-monospace text-info">citizen</td>
+                <td class="font-monospace">Public@123</td>
+                <td>Civilian Emergency Awareness User</td>
+                <td>View active regional hazard map, access safe evacuation routes & nearest hospitals</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-center mt-4">
+          <a href="/app" class="btn-command-launch py-2 px-4">
+            <i class="bi bi-box-arrow-in-right"></i> Enter Command Operations Center
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-4 border-top border-secondary border-opacity-25 text-center text-muted" style="font-size: 0.8rem;">
+    <div class="container">
+      <div class="mb-2">
+        <strong class="text-light">FIREGUARD AI</strong> &bull; SIH Problem Statement SIH26162
+      </div>
+      <div>
+        Designed for National Disaster Management Authorities, State Fire Services & Industrial Complexes across India.
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
