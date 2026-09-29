@@ -8,16 +8,16 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.main import app
-from app.services.classifier import FireClassifier
-from app.services.risk_scorer import RiskScorer
-from app.services.persistent_detector import PersistentSourceDetector
-from app.services.routing_engine import RoutingEngine
+from fastapi.testclient import TestClient
+from backend.main import app
+from backend.app.services.classifier import FireClassifier
+from backend.app.services.risk_scorer import RiskScorer
+from backend.app.services.persistent_detector import PersistentSourceDetector
+from backend.app.services.routing_engine import RoutingEngine
 
 class TestFireGuardCore(unittest.TestCase):
     def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
+        self.app = TestClient(app)
 
     def test_ai_classifier_industrial_fire(self):
         """Test AI classification accurately identifies high-risk industrial fires."""
@@ -81,7 +81,7 @@ class TestFireGuardCore(unittest.TestCase):
         """Test GET /api/system/status endpoint."""
         resp = self.app.get("/api/system/status")
         self.assertEqual(resp.status_code, 200)
-        data = resp.get_json()
+        data = resp.json()
         self.assertEqual(data["status"], "OPERATIONAL")
         self.assertTrue(data["active_hotspots"] > 0)
 
@@ -89,17 +89,17 @@ class TestFireGuardCore(unittest.TestCase):
         """Test GET /api/incidents endpoint."""
         resp = self.app.get("/api/incidents")
         self.assertEqual(resp.status_code, 200)
-        data = resp.get_json()
-        self.assertIn("incidents", data)
-        self.assertTrue(len(data["incidents"]) > 0)
+        data = resp.json()
+        incidents_list = data if isinstance(data, list) else data.get("incidents", [])
+        self.assertTrue(len(incidents_list) > 0)
 
     def test_api_analytics_charts(self):
         """Test GET /api/analytics/charts endpoint."""
         resp = self.app.get("/api/analytics/charts")
         self.assertEqual(resp.status_code, 200)
-        data = resp.get_json()
-        self.assertIn("classification_distribution", data)
-        self.assertIn("temporal_trend", data)
+        data = resp.json()
+        self.assertIn("classification", data)
+        self.assertIn("risk_tiers", data)
 
 if __name__ == "__main__":
     unittest.main()

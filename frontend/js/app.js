@@ -208,6 +208,299 @@ const App = {
         }
       }
     }
+
+    // Enforce Role-Based Access Control dynamically across navigation & views
+    this.applyRolePermissions(user.role || "OPERATOR");
+  },
+
+  applyRolePermissions(role) {
+    const activeRole = (role || "OPERATOR").toUpperCase();
+
+    // 1. Filter Sidebar Navigation according to data-roles attribute
+    const navItems = document.querySelectorAll(".sidebar-nav-item[data-roles]");
+    let allowedViews = [];
+    navItems.forEach(item => {
+      const allowedRoles = (item.getAttribute("data-roles") || "").split(",").map(r => r.trim().toUpperCase());
+      const isAllowed = allowedRoles.includes(activeRole);
+      item.style.display = isAllowed ? "flex" : "none";
+      if (isAllowed) {
+        const view = item.getAttribute("data-view");
+        if (view) allowedViews.push(view);
+      }
+    });
+
+    // 2. Hide Navigation Group Titles if no children are visible
+    const groups = [
+      { id: "group-title-ops", views: ["dashboard", "hotspots", "incidents", "facilities", "persistent"] },
+      { id: "group-title-intel", views: ["risk", "routes", "emergency", "analytics"] },
+      { id: "group-title-citizen", views: ["public_report"] },
+      { id: "group-title-sys", views: ["alerts", "settings"] }
+    ];
+
+    groups.forEach(g => {
+      const el = document.getElementById(g.id);
+      if (el) {
+        if (g.id === "group-title-citizen") {
+          el.style.display = "block";
+        } else {
+          const hasVisible = g.views.some(v => allowedViews.includes(v));
+          el.style.display = hasVisible ? "block" : "none";
+        }
+      }
+    });
+
+    // 3. Highlight citizen report sidebar button for PUBLIC users
+    const citSidebar = document.getElementById("sidebar-citizen-report");
+    if (citSidebar) {
+      if (activeRole === "PUBLIC") {
+        citSidebar.classList.add("bg-danger", "bg-opacity-25", "border", "border-danger");
+      } else {
+        citSidebar.classList.remove("bg-danger", "bg-opacity-25", "border", "border-danger");
+      }
+    }
+
+    // 4. Header Action Controls (SIH demo pipeline button is for commanders/operators/analysts)
+    const sihDemoBtn = document.getElementById("btn-trigger-sih-demo");
+    if (sihDemoBtn) {
+      sihDemoBtn.style.display = (activeRole === "PUBLIC") ? "none" : "inline-flex";
+    }
+
+    // 5. Header Fast Citizen Report Button
+    const citHeaderBtn = document.getElementById("btn-citizen-report-header");
+    if (citHeaderBtn) {
+      if (activeRole === "PUBLIC") {
+        citHeaderBtn.className = "btn btn-danger btn-sm fw-bold";
+      } else {
+        citHeaderBtn.className = "btn btn-outline-danger btn-sm";
+      }
+    }
+
+    // 6. View redirection if active tab is unauthorized for current role
+    if (AppState.activeTab && !allowedViews.includes(AppState.activeTab)) {
+      console.warn(`[RBAC] Role ${activeRole} cannot access view '${AppState.activeTab}'. Redirecting to dashboard.`);
+      Router.navigate("dashboard");
+    }
+
+    // 7. Update Emergency View if rendered
+    if (typeof EmergencyView !== "undefined" && EmergencyView.applyViewPermissions) {
+      EmergencyView.applyViewPermissions();
+    }
+
+    // 8. Inform public users of restricted authority scope
+    if (activeRole === "PUBLIC") {
+      this.showPublicNoticeToast();
+    }
+  },
+
+  showPublicNoticeToast() {
+    if (this._publicNoticeActive) return;
+    this._publicNoticeActive = true;
+    const toast = document.createElement("div");
+    toast.className = "alert alert-warning position-fixed bottom-0 start-50 translate-middle-x m-3 shadow-lg z-3";
+    toast.style.border = "1px solid #F59E0B";
+    toast.style.background = "rgba(15, 23, 42, 0.96)";
+    toast.style.maxWidth = "600px";
+    toast.innerHTML = `
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-shield-lock-fill text-warning fs-4"></i>
+        <div style="font-size: 0.8rem;">
+          <strong>PUBLIC SAFETY CLEARANCE ACTIVE:</strong> Command dispatching & industrial settings are restricted. You are authorized to <strong>dial emergency hotlines (108/101/112)</strong>, <strong>view safe evacuation corridors</strong>, and <strong>upload ground fire photos</strong>.
+        </div>
+        <button type="button" class="btn-close btn-close-white ms-auto" onclick="this.closest('.alert').remove()"></button>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+      this._publicNoticeActive = false;
+    }, 9000);
+  },
+
+  // -------------------------------------------------------------
+  // CITIZEN FIRE OBSERVATION & GROUND PHOTO DISPATCH SYSTEM
+  // -------------------------------------------------------------
+  openCitizenReportModal() {
+    const modalEl = document.getElementById("citizenReportModal");
+    if (!modalEl) return;
+
+    // Reset status alert
+    const alertEl = document.getElementById("citizen-report-alert");
+    if (alertEl) {
+      alertEl.className = "alert d-none";
+      alertEl.innerText = "";
+    }
+
+    // Reset submit button state
+    const submitBtn = document.getElementById("btn-submit-cit-report");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i class="bi bi-send-fill me-1"></i> Transmit Ground Observation to EOC`;
+    }
+
+    // Autofill user details
+    const u = AppState.currentUser || {};
+    const nameInput = document.getElementById("cit-reporter-name");
+    const phoneInput = document.getElementById("cit-reporter-phone");
+    if (nameInput) {
+      nameInput.value = u.full_name || (u.role === "PUBLIC" ? "Concerned Citizen Observer" : u.username);
+    }
+    if (phoneInput && !phoneInput.value) {
+      phoneInput.value = u.phone || "+91 98765 43210";
+    }
+
+    // Autofill coordinates from map center
+    const latInput = document.getElementById("cit-lat");
+    const lonInput = document.getElementById("cit-lon");
+    if (latInput && lonInput && TacticalMap && TacticalMap.map) {
+      const center = TacticalMap.map.getCenter();
+      latInput.value = center.lat.toFixed(4);
+      lonInput.value = center.lng.toFixed(4);
+    }
+
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    bsModal.show();
+  },
+
+  autoFillCitizenLocation() {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser. Please enter coordinates manually.");
+      return;
+    }
+    const latInput = document.getElementById("cit-lat");
+    const lonInput = document.getElementById("cit-lon");
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (latInput) latInput.value = pos.coords.latitude.toFixed(4);
+        if (lonInput) lonInput.value = pos.coords.longitude.toFixed(4);
+        this.showTacticalToast(`GPS Acquired: ${pos.coords.latitude.toFixed(4)}° N, ${pos.coords.longitude.toFixed(4)}° E`);
+      },
+      (err) => {
+        console.warn("Geolocation lookup error:", err);
+        alert("Could not retrieve GPS coordinates. Please ensure browser location permissions are granted.");
+      },
+      { enableHighAccuracy: true, timeout: 6000 }
+    );
+  },
+
+  handlePhotoPreview(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file format (PNG, JPG, WebP).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      AppState.pendingCitizenPhoto = dataUrl;
+
+      const previewEl = document.getElementById("cit-photo-preview");
+      const containerEl = document.getElementById("cit-photo-preview-container");
+
+      if (previewEl) previewEl.src = dataUrl;
+      if (containerEl) containerEl.classList.remove("d-none");
+    };
+    reader.readAsDataURL(file);
+  },
+
+  clearPhotoPreview() {
+    const fileInput = document.getElementById("cit-photo-file");
+    if (fileInput) fileInput.value = "";
+
+    AppState.pendingCitizenPhoto = null;
+
+    const previewEl = document.getElementById("cit-photo-preview");
+    const containerEl = document.getElementById("cit-photo-preview-container");
+
+    if (previewEl) previewEl.src = "";
+    if (containerEl) containerEl.classList.add("d-none");
+  },
+
+  async submitCitizenReport(event) {
+    if (event) event.preventDefault();
+
+    const titleEl = document.getElementById("cit-title");
+    const typeEl = document.getElementById("cit-type");
+    const latEl = document.getElementById("cit-lat");
+    const lonEl = document.getElementById("cit-lon");
+    const descEl = document.getElementById("cit-desc");
+    const nameEl = document.getElementById("cit-reporter-name");
+    const phoneEl = document.getElementById("cit-reporter-phone");
+    const alertEl = document.getElementById("citizen-report-alert");
+    const submitBtn = document.getElementById("btn-submit-cit-report");
+
+    if (!titleEl || !latEl || !lonEl) return;
+
+    const payload = {
+      title: `${titleEl.value.trim()} (${typeEl ? typeEl.value : 'Visible Flare'})`,
+      latitude: parseFloat(latEl.value),
+      longitude: parseFloat(lonEl.value),
+      description: descEl ? descEl.value.trim() : "",
+      photo_data: AppState.pendingCitizenPhoto || "",
+      reporter_name: nameEl ? nameEl.value.trim() : "Citizen Observer",
+      reporter_phone: phoneEl ? phoneEl.value.trim() : "+91 99999 88888"
+    };
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Transmitting Observation to EOC...`;
+    }
+
+    try {
+      const res = await Api.submitCitizenReport(payload);
+
+      if (alertEl) {
+        alertEl.className = "alert alert-success d-block";
+        alertEl.innerHTML = `
+          <strong><i class="bi bi-check-circle-fill me-1"></i> OBSERVATION LOGGED SUCCESSFULLY!</strong><br>
+          Emergency Tracking ID: <span class="font-monospace fw-bold text-light">${res.tracking_number || 'REG-CITIZEN-01'}</span><br>
+          <small class="text-white-50">Local emergency operations cell and hazmat team have been dispatched with ground telemetry.</small>
+        `;
+      }
+
+      this.showTacticalToast(`CITIZEN REPORT RECORDED: Tracking ID ${res.tracking_number || 'EOC-OK'}`);
+
+      // Add newly created incident to state and tactical map
+      if (res.incident) {
+        AppState.incidents = [res.incident, ...(AppState.incidents || [])];
+        TacticalMap.renderHotspots(AppState.hotspots, AppState.incidents);
+        if (AppState.activeTab === "incidents" && typeof IncidentsView !== "undefined") {
+          IncidentsView.render();
+        }
+        if (typeof DashboardView !== "undefined") {
+          DashboardView.updateKpis();
+        }
+      }
+
+      // Refresh state from server
+      setTimeout(() => {
+        this.refreshData(true);
+      }, 1000);
+
+      // Close modal after brief pause
+      setTimeout(() => {
+        const modalEl = document.getElementById("citizenReportModal");
+        if (modalEl) {
+          const bsModal = bootstrap.Modal.getInstance(modalEl);
+          if (bsModal) bsModal.hide();
+        }
+        this.clearPhotoPreview();
+      }, 2500);
+
+    } catch (err) {
+      console.error("Citizen report submission failed:", err);
+      if (alertEl) {
+        alertEl.className = "alert alert-danger d-block";
+        alertEl.innerHTML = `<strong>Submission Failed:</strong> ${err.message || 'Server error'}`;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="bi bi-send-fill me-1"></i> Retry Transmission`;
+      }
+    }
   },
 
   openUserProfileModal() {

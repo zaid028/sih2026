@@ -10,8 +10,23 @@ const EmergencyView = {
       this.contacts = Array.isArray(data) ? data : (data.contacts || []);
       this.renderContactsList();
       this.populateDispatchDropdown();
+      this.applyViewPermissions();
     } catch (err) {
       console.warn("Failed to fetch emergency contacts:", err);
+    }
+  },
+
+  applyViewPermissions() {
+    const role = (AppState.currentUser?.role || "OPERATOR").toUpperCase();
+    const opCard = document.getElementById("dispatch-operator-card");
+    const pubCard = document.getElementById("dispatch-public-card");
+
+    if (role === "PUBLIC") {
+      if (opCard) opCard.style.display = "none";
+      if (pubCard) pubCard.style.display = "block";
+    } else {
+      if (opCard) opCard.style.display = "block";
+      if (pubCard) pubCard.style.display = "none";
     }
   },
 
@@ -54,6 +69,12 @@ const EmergencyView = {
   },
 
   async triggerDispatch() {
+    const role = (AppState.currentUser?.role || "OPERATOR").toUpperCase();
+    if (role === "PUBLIC" || role === "ANALYST") {
+      alert("Access Denied: Your account role does not have authorization to trigger tactical multi-agency broadcasts. Use emergency telephone hotlines (108/101/112) or the Citizen Report button.");
+      return;
+    }
+
     const sel = document.getElementById("dispatch-incident-select");
     const incId = sel ? sel.value : null;
     if (!incId) {

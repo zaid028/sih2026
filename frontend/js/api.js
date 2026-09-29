@@ -126,5 +126,6 @@ const Api = {
   syncHotspots() { return this.post("/api/hotspots/sync"); },
   fetchSettings() { return this.get("/api/settings"); },
   updateSettings(data) { return this.post("/api/settings", data); },
-  switchDemoRole(role) { return this.post("/api/auth/demo-switch", { role }); }
+  switchDemoRole(role) { return this.post("/api/auth/demo-switch", { role }); },
+  submitCitizenReport(data) { return this.post("/api/v1/incidents/citizen-report", data); }
 };

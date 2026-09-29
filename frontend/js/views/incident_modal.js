@@ -40,7 +40,27 @@ const IncidentModal = {
     }
 
     if (statusBadgeEl) {
-      statusBadgeEl.innerText = inc.status.replace(/_/g, ' ');
+      statusBadgeEl.innerText = (inc.status || "DETECTED").replace(/_/g, ' ');
+    }
+
+    // Role-Based Access Control on Dossier Actions
+    const userRole = (AppState.currentUser?.role || "OPERATOR").toUpperCase();
+    const opActions = document.getElementById("dossier-operator-actions");
+    const pubActions = document.getElementById("dossier-public-actions");
+    const dispBtn = document.getElementById("btn-dossier-dispatch");
+
+    if (userRole === "PUBLIC") {
+      if (opActions) opActions.style.display = "none";
+      if (pubActions) pubActions.style.display = "flex";
+      if (dispBtn) dispBtn.style.display = "none";
+    } else if (userRole === "ANALYST") {
+      if (opActions) opActions.style.display = "none";
+      if (pubActions) pubActions.style.display = "none";
+      if (dispBtn) dispBtn.style.display = "none";
+    } else {
+      if (opActions) opActions.style.display = "flex";
+      if (pubActions) pubActions.style.display = "none";
+      if (dispBtn) dispBtn.style.display = "inline-flex";
     }
 
     if (!contentEl) return;

@@ -65,6 +65,11 @@
         <span id="nav-user-fullname" class="d-none d-lg-inline">Operator</span>
       </button>
 
+      <button class="btn btn-sm btn-danger d-flex align-items-center gap-1 py-1 px-2 fw-bold" id="btn-citizen-report-header" onclick="App.openCitizenReportModal()" title="Report Ground Fire Observation & Upload Photo">
+        <i class="bi bi-camera-fill"></i>
+        <span class="d-none d-sm-inline">REPORT FIRE</span>
+      </button>
+
       <button class="btn btn-sm btn-danger d-flex align-items-center gap-1 py-1 px-2 fw-bold" id="btn-run-sih-demo" onclick="App.triggerSihDemoFlow()" title="Trigger Complete 12-Step End-to-End Simulation">
         <i class="bi bi-play-circle-fill"></i>
         <span class="d-none d-md-inline">SIH DEMO</span>
@@ -93,45 +98,51 @@
   <!-- Left Tactical Sidebar (11 Navigation Tabs) -->
   <aside class="command-sidebar">
     <div>
-      <div class="nav-group-title">COMMAND OPERATIONS</div>
-      <a class="sidebar-nav-item active" data-view="dashboard">
+      <div class="nav-group-title" id="group-title-ops">COMMAND OPERATIONS</div>
+      <a class="sidebar-nav-item active" data-view="dashboard" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
         <span><i class="bi bi-speedometer2"></i> Dashboard</span>
       </a>
-      <a class="sidebar-nav-item" data-view="hotspots">
+      <a class="sidebar-nav-item" data-view="hotspots" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
         <span><i class="bi bi-fire"></i> Live Hotspots</span>
         <span class="sidebar-badge" id="badge-hotspots-count">12</span>
       </a>
-      <a class="sidebar-nav-item" data-view="incidents">
+      <a class="sidebar-nav-item" data-view="incidents" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
         <span><i class="bi bi-exclamation-octagon"></i> Incidents</span>
         <span class="sidebar-badge danger" id="badge-incidents-count">9</span>
       </a>
-      <a class="sidebar-nav-item" data-view="facilities">
+      <a class="sidebar-nav-item" data-view="facilities" data-roles="ADMIN,OPERATOR,FACILITY_MANAGER">
         <span><i class="bi bi-buildings"></i> Industrial Facilities</span>
       </a>
-      <a class="sidebar-nav-item" data-view="persistent">
+      <a class="sidebar-nav-item" data-view="persistent" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
         <span><i class="bi bi-repeat"></i> Persistent Sources</span>
       </a>
 
-      <div class="nav-group-title mt-3">DECISION & SAFETY INTEL</div>
-      <a class="sidebar-nav-item" data-view="risk">
+      <div class="nav-group-title mt-3" id="group-title-intel">DECISION & SAFETY INTEL</div>
+      <a class="sidebar-nav-item" data-view="risk" data-roles="ADMIN,OPERATOR,ANALYST">
         <span><i class="bi bi-cpu"></i> Risk Analysis</span>
       </a>
-      <a class="sidebar-nav-item" data-view="routes">
+      <a class="sidebar-nav-item" data-view="routes" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
         <span><i class="bi bi-signpost-2"></i> Safety Routes</span>
       </a>
-      <a class="sidebar-nav-item" data-view="emergency">
+      <a class="sidebar-nav-item" data-view="emergency" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
         <span><i class="bi bi-telephone-outbound"></i> Emergency Contacts</span>
       </a>
-      <a class="sidebar-nav-item" data-view="analytics">
+      <a class="sidebar-nav-item" data-view="analytics" data-roles="ADMIN,OPERATOR,ANALYST">
         <span><i class="bi bi-graph-up-arrow"></i> Analytics</span>
       </a>
 
-      <div class="nav-group-title mt-3">SYSTEM & CONTROLS</div>
-      <a class="sidebar-nav-item" data-view="alerts">
+      <div class="nav-group-title mt-3" id="group-title-citizen">CITIZEN RESPONSE</div>
+      <a class="sidebar-nav-item text-danger fw-bold" id="sidebar-citizen-report" onclick="App.openCitizenReportModal()">
+        <span><i class="bi bi-camera-fill text-danger"></i> Report Fire / Photo</span>
+        <span class="sidebar-badge danger">PUBLIC</span>
+      </a>
+
+      <div class="nav-group-title mt-3" id="group-title-sys">SYSTEM & CONTROLS</div>
+      <a class="sidebar-nav-item" data-view="alerts" data-roles="ADMIN,OPERATOR">
         <span><i class="bi bi-bell"></i> Alert Center</span>
         <span class="sidebar-badge danger" id="badge-alerts-count">3</span>
       </a>
-      <a class="sidebar-nav-item" data-view="settings">
+      <a class="sidebar-nav-item" data-view="settings" data-roles="ADMIN">
         <span><i class="bi bi-gear"></i> Settings</span>
       </a>
     </div>
@@ -505,8 +516,8 @@
           </div>
         </div>
 
-        <div class="col-lg-6">
-          <div class="tactical-card p-3">
+        <div class="col-lg-6" id="dispatch-control-column">
+          <div class="tactical-card p-3" id="dispatch-operator-card">
             <div class="card-title-tactical mb-2">
               <i class="bi bi-broadcast"></i> Simulated Multi-Agency Emergency Alert Dispatcher
             </div>
@@ -524,6 +535,36 @@
             <button class="btn btn-danger w-100 py-2 fw-bold text-uppercase" onclick="EmergencyView.triggerDispatch()" style="font-size: 0.85rem; letter-spacing: 0.06em;">
               <i class="bi bi-send-fill"></i> Simulate Emergency Alert Broadcast
             </button>
+          </div>
+
+          <!-- Public Civilian Emergency Assistance Card -->
+          <div class="tactical-card p-3 border-danger" id="dispatch-public-card" style="display: none; background: rgba(239, 68, 68, 0.05);">
+            <div class="card-title-tactical text-danger mb-2">
+              <i class="bi bi-shield-exclamation"></i> Civilian Emergency Fire & Rescue Assistance
+            </div>
+            <p class="text-muted small mb-3">
+              Public accounts are equipped with direct one-touch emergency hotline dialing, evacuation tracking, and ground fire photo transmission.
+            </p>
+
+            <div class="d-grid gap-2 mb-3">
+              <a href="tel:108" class="btn btn-danger fw-bold py-2">
+                <i class="bi bi-hospital me-1"></i> CALL 108 — DISASTER MEDICAL & AMBULANCE
+              </a>
+              <a href="tel:101" class="btn btn-warning text-dark fw-bold py-2">
+                <i class="bi bi-fire me-1"></i> CALL 101 — FIRE BRIGADE & HAZMAT RESCUE
+              </a>
+              <a href="tel:112" class="btn btn-info text-dark fw-bold py-2">
+                <i class="bi bi-shield me-1"></i> CALL 112 — NATIONAL POLICE EMERGENCY
+              </a>
+            </div>
+
+            <div class="p-2 rounded mb-3" style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-subtle); font-size: 0.75rem;">
+              <strong class="text-warning"><i class="bi bi-camera-fill me-1"></i> Witnessed Fire or Chemical Plume?</strong>
+              <div class="text-muted mt-1">Submit high-resolution photographs directly to the State Emergency Operations Center (SEOC).</div>
+              <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2 fw-bold" onclick="App.openCitizenReportModal()">
+                <i class="bi bi-upload me-1"></i> Launch Citizen Fire Observation & Photo Dispatch
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -666,7 +707,8 @@
         </div>
 
         <div class="modal-footer modal-tactical-footer d-flex justify-content-between flex-wrap gap-2">
-          <div class="d-flex gap-2 flex-wrap">
+          <!-- Command Operations Actions (Operator / Admin / Facility Mgr) -->
+          <div id="dossier-operator-actions" class="d-flex gap-2 flex-wrap">
             <button class="btn-tactical btn-sm" onclick="IncidentModal.setStatus('VERIFIED')">
               <i class="bi bi-check-circle"></i> Mark Verified
             </button>
@@ -681,8 +723,18 @@
             </button>
           </div>
 
-          <div class="d-flex gap-2">
-            <button class="btn btn-danger btn-sm fw-bold" onclick="IncidentModal.triggerSimulatedDispatch()">
+          <!-- Public Civilian Actions (Public Role Only) -->
+          <div id="dossier-public-actions" class="d-flex gap-2 flex-wrap align-items-center" style="display: none;">
+            <a href="tel:108" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-hospital"></i> Call 108</a>
+            <a href="tel:101" class="btn btn-warning btn-sm fw-bold text-dark"><i class="bi bi-fire"></i> Call 101</a>
+            <a href="tel:112" class="btn btn-info btn-sm fw-bold text-dark"><i class="bi bi-shield"></i> Call 112</a>
+            <button class="btn btn-outline-danger btn-sm" onclick="App.openCitizenReportModal()">
+              <i class="bi bi-camera-fill"></i> Upload Photo
+            </button>
+          </div>
+
+          <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-danger btn-sm fw-bold" id="btn-dossier-dispatch" onclick="IncidentModal.triggerSimulatedDispatch()">
               <i class="bi bi-broadcast"></i> Dispatch Alert
             </button>
             <button class="btn btn-info btn-sm fw-bold text-dark" onclick="IncidentModal.openSafetyRoute()">
@@ -893,6 +945,125 @@
             </button>
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CITIZEN FIRE REPORT & PHOTO UPLOAD  -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="citizenReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header bg-danger bg-opacity-20 border-bottom border-danger">
+          <div>
+            <h5 class="modal-title text-danger fw-bold mb-0">
+              <i class="bi bi-camera-fill me-2"></i> Civilian Ground Fire Observation & Photo Dispatch
+            </h5>
+            <span class="text-muted small">Public Safety Portal &bull; Immediate Emergency Response Integration</span>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- Emergency hotline fast-call strip -->
+          <div class="p-3 rounded mb-3" style="background: rgba(239, 68, 68, 0.15); border: 1px solid #EF4444;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <strong class="text-danger fs-6"><i class="bi bi-exclamation-triangle-fill me-1"></i> IN IMMEDIATE PERIL? CALL EMERGENCY SERVICES:</strong>
+                <div class="text-light small">Do not approach an active industrial chemical or tank fire.</div>
+              </div>
+              <div class="d-flex gap-2">
+                <a href="tel:108" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-hospital"></i> 108 AMBULANCE</a>
+                <a href="tel:101" class="btn btn-warning btn-sm fw-bold text-dark"><i class="bi bi-fire"></i> 101 FIRE HAZMAT</a>
+                <a href="tel:112" class="btn btn-info btn-sm fw-bold text-dark"><i class="bi bi-shield"></i> 112 POLICE</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alert message box -->
+          <div id="citizen-report-alert" class="alert d-none mb-3 py-2 small" role="alert"></div>
+
+          <form id="form-citizen-report" onsubmit="App.submitCitizenReport(event)">
+            <div class="row g-3 mb-3">
+              <div class="col-md-8">
+                <label class="form-label text-muted small fw-bold">INCIDENT HEADING / WHAT DID YOU WITNESS?</label>
+                <input type="text" class="form-control" id="cit-title" required placeholder="e.g. Thick black chemical smoke & bright orange flames near storage tank" value="Visible smoke plume & flame flare observed">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-muted small fw-bold">SMOKE / FIRE SEVERITY</label>
+                <select class="form-select" id="cit-type">
+                  <option value="Heavy Black Chemical Smoke" selected>Heavy Black Chemical Smoke</option>
+                  <option value="Active Orange Tank Flame">Active Orange Tank Flame</option>
+                  <option value="Hissing Vapor Leak / Gas Cloud">Hissing Vapor Leak / Gas Cloud</option>
+                  <option value="Uncontrolled Refinery Flaring">Uncontrolled Refinery Flaring</option>
+                  <option value="Other Hazard">Other Hazardous Fire</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Coordinates Row -->
+            <div class="row g-2 mb-3">
+              <div class="col-md-5">
+                <label class="form-label text-muted small fw-bold">LATITUDE</label>
+                <input type="number" step="0.0001" class="form-control font-monospace" id="cit-lat" required value="22.4707">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label text-muted small fw-bold">LONGITUDE</label>
+                <input type="number" step="0.0001" class="form-control font-monospace" id="cit-lon" required value="70.0577">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-info btn-sm w-100 py-2" onclick="App.autoFillCitizenLocation()" title="Use GPS Location">
+                  <i class="bi bi-geo-alt-fill"></i> GPS
+                </button>
+              </div>
+            </div>
+
+            <!-- Photo Upload Area -->
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">
+                <i class="bi bi-camera-fill text-danger me-1"></i> UPLOAD GROUND OBSERVATION PHOTO
+              </label>
+              <input type="file" class="form-control" id="cit-photo-file" accept="image/*" onchange="App.handlePhotoPreview(event)">
+              <div class="form-text text-muted" style="font-size: 0.72rem;">
+                Select image or take camera photo on mobile (PNG, JPG, WebP supported).
+              </div>
+
+              <!-- Photo Preview Container -->
+              <div id="cit-photo-preview-container" class="mt-2 p-2 rounded d-none" style="background: rgba(15, 23, 42, 0.9); border: 1px dashed var(--border-bright);">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="text-success small fw-bold"><i class="bi bi-check2"></i> Photo Selected:</span>
+                  <button type="button" class="btn btn-link text-danger p-0 small text-decoration-none" onclick="App.clearPhotoPreview()">Remove</button>
+                </div>
+                <img id="cit-photo-preview" src="" alt="Ground Photo Preview" style="max-height: 140px; border-radius: 4px; object-fit: cover;">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">OBSERVATION DETAILS & LANDMARKS</label>
+              <textarea class="form-control" id="cit-desc" rows="2" placeholder="Describe the scene: e.g. Visible from SH-6 highway, wind blowing southeast, emergency sirens audible.">Visible from highway corridor near refinery perimeter. Significant radiant heat felt at 400m stand-off.</textarea>
+            </div>
+
+            <!-- Reporter Details -->
+            <div class="row g-2 mb-4">
+              <div class="col-md-6">
+                <label class="form-label text-muted small fw-bold">YOUR FULL NAME</label>
+                <input type="text" class="form-control" id="cit-reporter-name" required placeholder="Civilian Observer" value="Concerned Citizen Observer">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted small fw-bold">CALLBACK MOBILE PHONE</label>
+                <input type="text" class="form-control font-monospace" id="cit-reporter-phone" required placeholder="+91 99999 88888" value="+91 98765 43210">
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-danger btn-sm px-4 fw-bold" id="btn-submit-cit-report">
+                <i class="bi bi-send-fill me-1"></i> Transmit Ground Observation to EOC
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

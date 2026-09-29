@@ -11,13 +11,14 @@ from sqlalchemy import func
 from backend.database.session import get_db
 from backend.config.settings import settings
 from backend.models.entities import (
-    IndustrialFacility, ThermalHotspot, Incident, Alert, PersistentSource,
+    IndustrialFacility, ThermalHotspot, Incident, IncidentEvent, Alert, PersistentSource,
     EmergencyContact, Route
 )
 from backend.services.firms_service import FIRMSService
 from backend.services.incident_service import IncidentService
 from backend.services.routing_service import RoutingService
 from backend.services.demo_service import DemoService
+from backend.api.deps import get_current_user_optional
 
 legacy_router = APIRouter(prefix="/api", tags=["Frontend Compatibility Layer"])
 
@@ -59,6 +60,7 @@ def legacy_get_hotspots(
     min_confidence: Optional[float] = Query(None),
     classification: Optional[str] = Query(None),
     risk_level: Optional[str] = Query(None),
+    satellite: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     query = db.query(ThermalHotspot)
@@ -66,11 +68,17 @@ def legacy_get_hotspots(
     if risk_level: query = query.filter(ThermalHotspot.risk_level == risk_level.upper())
     if classification: query = query.filter(ThermalHotspot.classification == classification)
     if source: query = query.filter(ThermalHotspot.source.ilike(f"%{source}%"))
+    if satellite: query = query.filter(ThermalHotspot.satellite.ilike(f"%{satellite}%"))
     hotspots = query.order_by(ThermalHotspot.created_at.desc()).all()
     return [h.to_dict() for h in hotspots]
 
 @legacy_router.post("/hotspots/sync")
-def legacy_sync_hotspots(db: Session = Depends(get_db)):
+def legacy_sync_hotspots(db: Session = Depends(get_db), current_user = Depends(get_current_user_optional)):
+    if current_user and current_user.role == "PUBLIC":
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "FORBIDDEN", "message": "Public civilian users are not authorized to trigger satellite sweeps."}
+        )
     res = FIRMSService.ingest_observations(db)
     return {
         "success": True,
@@ -97,14 +105,71 @@ def legacy_get_incident(id: str = Path(...), db: Session = Depends(get_db)):
 def legacy_patch_status(
     id: str = Path(...),
     payload: Dict[str, Any] = Body(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user_optional)
 ):
+    role = (current_user.role if current_user else payload.get("role", "")).upper()
+    if role == "PUBLIC":
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "FORBIDDEN", "message": "Public civilian users are not authorized to alter tactical incident status. Please contact emergency operations or submit a citizen photo observation."}
+        )
     status_val = payload.get("status")
     notes = payload.get("notes", "")
-    updated = IncidentService.update_incident(db, id, status=status_val, operator_notes=notes)
+    actor_name = current_user.full_name if current_user else payload.get("verified_by", "Command Cell Operator")
+    updated = IncidentService.update_incident(db, id, status=status_val, operator_notes=notes, verified_by=actor_name)
     if not updated:
         raise HTTPException(status_code=404, detail="Incident not found")
     return updated
+
+@legacy_router.post("/citizen-report")
+def legacy_citizen_report(payload: Dict[str, Any] = Body(...), db: Session = Depends(get_db)):
+    import uuid
+    title = payload.get("title", "Ground Fire Observation")
+    lat = float(payload.get("latitude", 22.4707))
+    lon = float(payload.get("longitude", 70.0577))
+    desc = payload.get("description", "Ground observation submitted by civilian.")
+    photo = payload.get("photo_data")
+    rep_name = payload.get("reporter_name", "Citizen Observer")
+    rep_phone = payload.get("reporter_phone", "+91 99999 88888")
+
+    nearest_fac = db.query(IndustrialFacility).first()
+    notes = f"CITIZEN OBSERVATION by {rep_name} ({rep_phone}): {desc}"
+    if photo:
+        notes += " [GROUND PHOTO UPLOADED]"
+
+    inc = IncidentService.create_incident(
+        db,
+        title=f"🚨 [PUBLIC REPORT] {title}",
+        latitude=lat,
+        longitude=lon,
+        facility_id=nearest_fac.id if nearest_fac else None,
+        classification="Citizen Ground Fire Observation",
+        confidence=0.92,
+        risk_score=78.0,
+        risk_level="HIGH",
+        operator_notes=notes
+    )
+
+    import json
+    event = IncidentEvent(
+        id=str(uuid.uuid4()),
+        incident_id=inc.id,
+        event_type="CITIZEN_PHOTO_REPORT",
+        description=f"Ground photo & observation submitted by civilian: {desc}",
+        user_id=rep_name,
+        metadata_json=json.dumps({"reporter_name": rep_name, "reporter_phone": rep_phone, "has_photo": bool(photo)}),
+        created_at=datetime.utcnow()
+    )
+    db.add(event)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": "Citizen emergency observation and photo recorded. Emergency operations cell alerted.",
+        "tracking_number": inc.incident_number or inc.id,
+        "incident": inc.to_dict()
+    }
 
 @legacy_router.get("/facilities")
 def legacy_get_facilities(db: Session = Depends(get_db)):
@@ -152,7 +217,17 @@ def legacy_emergency_contacts(db: Session = Depends(get_db)):
     }
 
 @legacy_router.post("/emergency/dispatch-sim")
-def legacy_dispatch_sim(payload: Dict[str, Any] = Body(...), db: Session = Depends(get_db)):
+def legacy_dispatch_sim(
+    payload: Dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user_optional)
+):
+    role = (current_user.role if current_user else payload.get("role", "")).upper()
+    if role in ["PUBLIC", "ANALYST"]:
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "FORBIDDEN", "message": f"Role '{role}' is not authorized to trigger tactical multi-agency dispatches. Please use direct emergency calling (101/108/112)."}
+        )
     inc_id = payload.get("incident_id")
     inc = db.query(Incident).filter(Incident.id == inc_id).first() if inc_id else None
     fac_name = inc.facility.name if (inc and inc.facility) else "Industrial Complex"
@@ -270,7 +345,13 @@ def legacy_get_settings():
     }
 
 @legacy_router.post("/settings")
-def legacy_save_settings(data: Dict[str, Any] = Body(...)):
+def legacy_save_settings(data: Dict[str, Any] = Body(...), current_user = Depends(get_current_user_optional)):
+    role = (current_user.role if current_user else data.get("role", "")).upper()
+    if role and role != "ADMIN":
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "FORBIDDEN", "message": "Only NDMA Administrators are authorized to alter global system parameters and API keys."}
+        )
     if "demo_mode" in data:
         settings.DEMO_MODE = bool(data["demo_mode"])
     if "firms_map_key" in data and data["firms_map_key"]:

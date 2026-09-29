@@ -165,6 +165,15 @@ class IncidentCreateRequest(BaseModel):
     confidence: Optional[float] = Field(default=0.88)
     operator_notes: Optional[str] = Field(default="Automated ingestion alert triggered")
 
+class CitizenReportRequest(BaseModel):
+    title: str = Field(..., example="Dense Black Smoke near Chemical Terminal")
+    latitude: float = Field(..., example=22.4707)
+    longitude: float = Field(..., example=70.0577)
+    description: str = Field(..., example="High visible flame and acrid chemical odor observed from perimeter.")
+    photo_data: Optional[str] = Field(default=None, description="Base64 encoded image or photo link")
+    reporter_name: Optional[str] = Field(default="Concerned Citizen")
+    reporter_phone: Optional[str] = Field(default="+91 99999 88888")
+
 class IncidentUpdateRequest(BaseModel):
     status: Optional[str] = Field(None, example="VERIFIED", description="DETECTED, UNDER_REVIEW, VERIFIED, ESCALATED, DISPATCH_REQUIRED, RESOLVED, FALSE_ALARM")
     operator_notes: Optional[str] = Field(None, example="Verified via on-site thermal sensor.")
