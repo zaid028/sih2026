@@ -75,6 +75,14 @@ const TacticalMap = {
       }
     });
 
+    // Invalidate size to ensure map fills container completely
+    setTimeout(() => {
+      if (this.map) this.map.invalidateSize();
+    }, 200);
+    setTimeout(() => {
+      if (this.map) this.map.invalidateSize();
+    }, 500);
+
     console.log("Tactical Leaflet Map initialized successfully.");
   },
 

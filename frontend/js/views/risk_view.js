@@ -500,6 +500,14 @@ const RiskView = {
 
     // Draw Vector Impact Polygons
     this.drawVectorPolygons(centerLat, centerLon);
+
+    // Invalidate size to ensure map fills container completely
+    setTimeout(() => {
+      if (this.riskMap) this.riskMap.invalidateSize();
+    }, 150);
+    setTimeout(() => {
+      if (this.riskMap) this.riskMap.invalidateSize();
+    }, 450);
   },
 
   drawVectorPolygons(lat, lon) {

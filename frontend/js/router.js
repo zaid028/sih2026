@@ -69,8 +69,11 @@ const Router = {
     // Trigger view-specific lifecycle hooks
     if (viewName === "dashboard" || viewName === "routes") {
       setTimeout(() => {
-        if (TacticalMap.map) TacticalMap.map.invalidateSize();
-      }, 100);
+        if (TacticalMap && TacticalMap.map) TacticalMap.map.invalidateSize();
+      }, 150);
+      setTimeout(() => {
+        if (TacticalMap && TacticalMap.map) TacticalMap.map.invalidateSize();
+      }, 400);
     }
 
     if (viewName === "hotspots" && typeof HotspotsView !== "undefined") {
@@ -95,6 +98,12 @@ const Router = {
 
     if (viewName === "risk" && typeof RiskView !== "undefined") {
       RiskView.render();
+      setTimeout(() => {
+        if (RiskView.riskMap) RiskView.riskMap.invalidateSize();
+      }, 200);
+      setTimeout(() => {
+        if (RiskView.riskMap) RiskView.riskMap.invalidateSize();
+      }, 500);
     }
 
     if (viewName === "emergency" && typeof EmergencyView !== "undefined") {
@@ -110,3 +119,13 @@ const Router = {
     }
   }
 };
+
+// Global resize handler to ensure maps never get stuck
+window.addEventListener("resize", () => {
+  if (typeof TacticalMap !== "undefined" && TacticalMap.map) {
+    TacticalMap.map.invalidateSize();
+  }
+  if (typeof RiskView !== "undefined" && RiskView.riskMap) {
+    RiskView.riskMap.invalidateSize();
+  }
+});
