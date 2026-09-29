@@ -12,3 +12,4 @@ pandas>=2.2.0
 PyJWT>=2.8.0
 python-dotenv>=1.0.0
 ujson>=5.9.0
+email-validator>=2.0.0

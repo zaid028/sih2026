@@ -4,7 +4,13 @@ SIH Problem Statement SIH26162
 Complies with FastAPI OpenAPI specs and all 27 user requirements.
 """
 from typing import List, Optional, Dict, Any, Union
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
+
+try:
+    import email_validator  # noqa: F401
+    from pydantic import EmailStr
+except ImportError:
+    EmailStr = str  # Fallback to standard string if email-validator package is absent
 
 # Standard Error Response (Requirement 22)
 class ErrorDetail(BaseModel):
