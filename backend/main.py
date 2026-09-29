@@ -50,11 +50,15 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
-    # Start periodic background ingestion task
-    bg_task = asyncio.create_task(periodic_firms_ingestion())
+    # Start periodic background ingestion task only on standalone servers
+    bg_task = None
+    import os
+    if not os.environ.get("VERCEL"):
+        bg_task = asyncio.create_task(periodic_firms_ingestion())
     yield
     # Shutdown logic
-    bg_task.cancel()
+    if bg_task:
+        bg_task.cancel()
 
 app = FastAPI(
     title="FIREGUARD AI - Mission Command & Geospatial Analytics API",

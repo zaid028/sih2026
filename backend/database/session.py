@@ -8,15 +8,24 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from backend.config.settings import settings
 
+import os
+
 db_url = settings.DATABASE_URL
-if db_url.startswith("sqlite"):
+if os.environ.get("VERCEL"):
+    # Vercel serverless environment: only /tmp is writable
+    db_file = Path("/tmp/fireguard.db")
+    engine = create_engine(f"sqlite:///{db_file}", connect_args={"check_same_thread": False})
+elif db_url.startswith("sqlite"):
     # Ensure data directory exists
     db_path_part = db_url.replace("sqlite:///", "")
     db_file = Path(db_path_part)
     if not db_file.is_absolute():
         from backend.config.settings import WORKSPACE_DIR
         db_file = WORKSPACE_DIR / db_path_part
-    db_file.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        db_file.parent.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        db_file = Path("/tmp/fireguard.db")
     engine = create_engine(f"sqlite:///{db_file}", connect_args={"check_same_thread": False})
 else:
     engine = create_engine(db_url, pool_pre_ping=True)
