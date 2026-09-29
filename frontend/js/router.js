@@ -1,6 +1,6 @@
 /**
  * FIREGUARD AI - Single Page Application View Router
- * Manages navigation between all 11 tactical operations center views.
+ * Manages navigation between all tactical operations center views.
  */
 const Router = {
   currentView: "dashboard",
@@ -8,6 +8,15 @@ const Router = {
   init() {
     // Bind all sidebar nav clicks
     document.querySelectorAll(".sidebar-nav-item").forEach(item => {
+      item.addEventListener("click", (e) => {
+        e.preventDefault();
+        const targetView = item.getAttribute("data-view");
+        if (targetView) this.navigate(targetView);
+      });
+    });
+
+    // Bind all top navbar center links (Command Center, Satellite Analysis, Incident Intelligence, Risk Analytics)
+    document.querySelectorAll(".nav-link-item").forEach(item => {
       item.addEventListener("click", (e) => {
         e.preventDefault();
         const targetView = item.getAttribute("data-view");
@@ -37,6 +46,15 @@ const Router = {
       }
     });
 
+    // Update active top navbar links
+    document.querySelectorAll(".nav-link-item").forEach(item => {
+      if (item.getAttribute("data-view") === viewName) {
+        item.classList.add("active");
+      } else {
+        item.classList.remove("active");
+      }
+    });
+
     // Hide all view containers
     document.querySelectorAll(".tactical-view").forEach(el => {
       el.style.display = "none";
@@ -49,10 +67,14 @@ const Router = {
     window.location.hash = viewName;
 
     // Trigger view-specific lifecycle hooks
-    if (viewName === "dashboard" || viewName === "hotspots" || viewName === "routes") {
+    if (viewName === "dashboard" || viewName === "routes") {
       setTimeout(() => {
         if (TacticalMap.map) TacticalMap.map.invalidateSize();
       }, 100);
+    }
+
+    if (viewName === "hotspots" && typeof HotspotsView !== "undefined") {
+      HotspotsView.render();
     }
 
     if (viewName === "analytics" && typeof AnalyticsView !== "undefined") {

@@ -36,13 +36,16 @@ def override_get_db():
     finally:
         db.close()
 
-app.dependency_overrides[get_db] = override_get_db
 
 class TestFireGuardEndToEndAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        app.dependency_overrides[get_db] = override_get_db
         if test_db_file.exists():
-            test_db_file.unlink()
+            try:
+                test_db_file.unlink()
+            except Exception:
+                pass
         Base.metadata.create_all(bind=test_engine)
         db = TestingSessionLocal()
         try:
@@ -53,6 +56,7 @@ class TestFireGuardEndToEndAPI(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        app.dependency_overrides.clear()
         if test_db_file.exists():
             try:
                 test_db_file.unlink()

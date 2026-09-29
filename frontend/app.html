@@ -13,7 +13,7 @@
 </head>
 <body>
 
-  <!-- Top Tactical Navigation Bar -->
+  <!-- Top Tactical Navigation Bar (Master Command Center Design System) -->
   <header class="command-navbar">
     <div class="brand-section">
       <div class="radar-logo">
@@ -25,33 +25,28 @@
       </div>
     </div>
 
-    <!-- Live Telemetry & Clocks -->
-    <div class="nav-telemetry d-none d-lg-flex">
-      <div class="telemetry-pill" id="nav-system-status">
-        <span class="pulse-dot"></span>
+    <!-- Center Navigation Links (Exact from Reference UI) -->
+    <nav class="nav-center-links d-none d-lg-flex">
+      <a class="nav-link-item active" data-view="dashboard">Command Center</a>
+      <a class="nav-link-item" data-view="hotspots">Satellite Analysis</a>
+      <a class="nav-link-item" data-view="incidents">Incident Intelligence</a>
+      <a class="nav-link-item" data-view="risk">Risk Analytics</a>
+    </nav>
+
+    <!-- Topbar Right Actions -->
+    <div class="nav-actions-right">
+      <!-- Live Telemetry Pill -->
+      <div class="telemetry-pill d-none d-xl-flex" id="nav-system-status">
+        <span class="badge bg-warning text-dark me-1">🟡</span>
         <span>DEMO MODE ACTIVE</span>
       </div>
 
-      <div class="telemetry-pill">
-        <i class="bi bi-clock-history text-info"></i>
-        <span id="clock-utc">00:00:00 UTC</span>
-        <span class="text-muted">|</span>
-        <span id="clock-ist" class="text-warning">00:00:00 IST</span>
-      </div>
-
-      <div class="telemetry-pill" id="nav-threat-count">
-        <i class="bi bi-radioactive text-danger"></i>
-        <span>0 CRITICAL THREATS</span>
-      </div>
-    </div>
-
-    <!-- Role Switcher & Persona Actions -->
-    <div class="d-flex align-items-center gap-2">
-      <div class="input-group input-group-sm">
-        <span class="input-group-text bg-dark border-secondary text-info" style="font-size: 0.75rem;">
-          <i class="bi bi-person-badge"></i> ROLE:
+      <!-- Quick Role Switcher -->
+      <div class="input-group input-group-sm d-none d-xxl-flex" style="width: auto;">
+        <span class="input-group-text bg-dark border-secondary text-info py-0 px-2" style="font-size: 0.72rem;">
+          <i class="bi bi-person-badge"></i>
         </span>
-        <select class="form-select form-select-sm bg-dark text-light border-secondary" id="demo-role-selector" style="font-size: 0.78rem;">
+        <select class="form-select form-select-sm bg-dark text-light border-secondary py-0" id="demo-role-selector" style="font-size: 0.75rem;">
           <option value="operator" selected>Operator (Command Cell)</option>
           <option value="admin">Administrator (NDMA)</option>
           <option value="facility_manager">Facility Safety Manager</option>
@@ -60,107 +55,113 @@
         </select>
       </div>
 
-      <button class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 py-1 px-2" onclick="App.openUserProfileModal()" title="View User Account & Credentials Details">
-        <i class="bi bi-person-circle"></i>
-        <span id="nav-user-fullname" class="d-none d-lg-inline">Operator</span>
+      <!-- Quick Action Icons -->
+      <button class="nav-icon-btn position-relative" onclick="Router.navigate('alerts')" title="Alert Notifications">
+        <i class="bi bi-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="transform: translate(-30%, 30%) !important;"></span>
+      </button>
+      <button class="nav-icon-btn" onclick="Router.navigate('settings')" title="System Settings">
+        <i class="bi bi-gear"></i>
+      </button>
+      <button class="nav-icon-btn" onclick="App.openUserProfileModal()" title="Operator Profile & Dossier">
+        <i class="bi bi-shield-check text-info"></i>
       </button>
 
-      <button class="btn btn-sm btn-danger d-flex align-items-center gap-1 py-1 px-2 fw-bold" id="btn-citizen-report-header" onclick="App.openCitizenReportModal()" title="Report Ground Fire Observation & Upload Photo">
-        <i class="bi bi-camera-fill"></i>
-        <span class="d-none d-sm-inline">REPORT FIRE</span>
+      <!-- Primary Action Buttons from Reference UI -->
+      <button class="btn-dispatch-unit" onclick="App.openDispatchModal()" title="Deploy Tactical Units">
+        <i class="bi bi-send-fill"></i> Dispatch Unit
+      </button>
+      <button class="btn-emergency-broadcast" onclick="App.openBroadcastModal()" title="Multi-Agency Emergency Broadcast">
+        <i class="bi bi-broadcast"></i> Emergency Broadcast
       </button>
 
-      <button class="btn btn-sm btn-danger d-flex align-items-center gap-1 py-1 px-2 fw-bold" id="btn-run-sih-demo" onclick="App.triggerSihDemoFlow()" title="Trigger Complete 12-Step End-to-End Simulation">
-        <i class="bi bi-play-circle-fill"></i>
-        <span class="d-none d-md-inline">SIH DEMO</span>
+      <!-- Report Fire Action for Citizens -->
+      <button class="btn btn-sm btn-outline-danger d-none d-sm-inline-flex align-items-center gap-1 py-1 px-2 fw-bold" onclick="App.openCitizenReportModal()" title="Report Fire / Upload Photo">
+        <i class="bi bi-camera-fill"></i> <span class="d-none d-md-inline">REPORT FIRE</span>
       </button>
 
-      <button class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 py-1 px-2" id="btn-health-monitor" onclick="App.openHealthModal()" title="View Micro-component Health Status">
-        <i class="bi bi-activity"></i>
-        <span class="d-none d-xl-inline">HEALTH</span>
+      <!-- SIH Demo Flow Trigger -->
+      <button class="btn btn-sm btn-outline-info d-none d-md-inline-flex align-items-center gap-1 py-1 px-2 fw-bold" onclick="App.triggerSihDemoFlow()" title="Trigger Complete 12-Step End-to-End Simulation">
+        <i class="bi bi-play-circle-fill"></i> <span class="d-none d-lg-inline">SIH DEMO</span>
       </button>
-
-      <a href="/docs" target="_blank" class="btn btn-sm btn-outline-warning d-none d-md-inline-flex py-1 px-2" title="Interactive OpenAPI Docs">
-        <i class="bi bi-file-code"></i> <span class="d-none d-xl-inline">API DOCS</span>
-      </a>
-
-      <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 py-1 px-2 fw-bold" onclick="App.logout()" title="Secure Logout from Terminal">
-        <i class="bi bi-box-arrow-right"></i>
-        <span class="d-none d-lg-inline">LOGOUT</span>
-      </button>
-
-      <a href="/" class="btn-tactical btn-sm py-1 d-none d-md-inline-flex" title="Return to Portal">
-        <i class="bi bi-house"></i>
-      </a>
     </div>
   </header>
 
-  <!-- Left Tactical Sidebar (11 Navigation Tabs) -->
+  <!-- Left Tactical Sidebar (Exact Reference UI) -->
   <aside class="command-sidebar">
     <div>
-      <div class="nav-group-title" id="group-title-ops">COMMAND OPERATIONS</div>
-      <a class="sidebar-nav-item active" data-view="dashboard" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
-        <span><i class="bi bi-speedometer2"></i> Dashboard</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="hotspots" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
-        <span><i class="bi bi-fire"></i> Live Hotspots</span>
-        <span class="sidebar-badge" id="badge-hotspots-count">12</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="incidents" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
-        <span><i class="bi bi-exclamation-octagon"></i> Incidents</span>
-        <span class="sidebar-badge danger" id="badge-incidents-count">9</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="facilities" data-roles="ADMIN,OPERATOR,FACILITY_MANAGER">
-        <span><i class="bi bi-buildings"></i> Industrial Facilities</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="persistent" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
-        <span><i class="bi bi-repeat"></i> Persistent Sources</span>
-      </a>
+      <!-- Brand & Operator Heading -->
+      <div class="sidebar-brand-strip">
+        <div class="sidebar-avatar">FA</div>
+        <div>
+          <div class="sidebar-brand-heading">FIREGUARD OPS</div>
+          <div class="sidebar-brand-sub">Industrial Safety Monitoring</div>
+        </div>
+      </div>
 
-      <div class="nav-group-title mt-3" id="group-title-intel">DECISION & SAFETY INTEL</div>
-      <a class="sidebar-nav-item" data-view="risk" data-roles="ADMIN,OPERATOR,ANALYST">
-        <span><i class="bi bi-cpu"></i> Risk Analysis</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="routes" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
-        <span><i class="bi bi-signpost-2"></i> Safety Routes</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="emergency" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
-        <span><i class="bi bi-telephone-outbound"></i> Emergency Contacts</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="analytics" data-roles="ADMIN,OPERATOR,ANALYST">
-        <span><i class="bi bi-graph-up-arrow"></i> Analytics</span>
-      </a>
-
-      <div class="nav-group-title mt-3" id="group-title-citizen">CITIZEN RESPONSE</div>
-      <a class="sidebar-nav-item text-danger fw-bold" id="sidebar-citizen-report" onclick="App.openCitizenReportModal()">
-        <span><i class="bi bi-camera-fill text-danger"></i> Report Fire / Photo</span>
-        <span class="sidebar-badge danger">PUBLIC</span>
-      </a>
-
-      <div class="nav-group-title mt-3" id="group-title-sys">SYSTEM & CONTROLS</div>
-      <a class="sidebar-nav-item" data-view="alerts" data-roles="ADMIN,OPERATOR">
-        <span><i class="bi bi-bell"></i> Alert Center</span>
-        <span class="sidebar-badge danger" id="badge-alerts-count">3</span>
-      </a>
-      <a class="sidebar-nav-item" data-view="settings" data-roles="ADMIN">
-        <span><i class="bi bi-gear"></i> Settings</span>
-      </a>
+      <!-- Main Navigation Links -->
+      <div class="sidebar-nav-list">
+        <a class="sidebar-nav-item active" data-view="dashboard" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
+          <span><i class="bi bi-speedometer2"></i> Command Center</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="hotspots" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
+          <span><i class="bi bi-satellite"></i> Satellite Analysis</span>
+          <span class="sidebar-badge" id="badge-hotspots-count">24</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="incidents" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
+          <span><i class="bi bi-fire"></i> Incident Intelligence</span>
+          <span class="sidebar-badge danger" id="badge-incidents-count">08</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="risk" data-roles="ADMIN,OPERATOR,ANALYST">
+          <span><i class="bi bi-pie-chart"></i> Risk Analytics</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="facilities" data-roles="ADMIN,OPERATOR,FACILITY_MANAGER">
+          <span><i class="bi bi-buildings"></i> Industrial Facilities</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="persistent" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER">
+          <span><i class="bi bi-repeat"></i> Persistent Sources</span>
+          <span class="sidebar-badge" style="background: rgba(168, 85, 247, 0.2); color: #C084FC;" id="badge-persistent-count">13</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="routes" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
+          <span><i class="bi bi-signpost-2"></i> Safety Routes</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="emergency" data-roles="ADMIN,OPERATOR,ANALYST,FACILITY_MANAGER,PUBLIC">
+          <span><i class="bi bi-telephone-outbound"></i> Emergency Contacts</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="analytics" data-roles="ADMIN,OPERATOR,ANALYST">
+          <span><i class="bi bi-graph-up-arrow"></i> Analytics BI</span>
+        </a>
+        <a class="sidebar-nav-item" data-view="alerts" data-roles="ADMIN,OPERATOR">
+          <span><i class="bi bi-bell"></i> Alert Center</span>
+          <span class="sidebar-badge danger" id="badge-alerts-count">03</span>
+        </a>
+        <a class="sidebar-nav-item text-danger fw-bold" id="sidebar-citizen-report" onclick="App.openCitizenReportModal()">
+          <span><i class="bi bi-camera-fill text-danger"></i> Report Fire / Photo</span>
+          <span class="sidebar-badge danger">PUBLIC</span>
+        </a>
+      </div>
     </div>
 
-    <!-- User Profile Strip in Sidebar Bottom -->
-    <div class="p-2 rounded mt-3" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); font-size: 0.75rem;">
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">ACTIVE PERSONA</span>
-        <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.7rem;" onclick="App.openUserProfileModal()" title="View Account Details">
-          <i class="bi bi-box-arrow-up-right"></i> Details
-        </button>
+    <!-- Sidebar Bottom: Initiate Protocol & Live System Status -->
+    <div class="sidebar-footer-actions">
+      <button class="btn-initiate-protocol" onclick="App.openInitiateProtocolModal()">
+        <i class="bi bi-lightning-charge-fill me-1"></i> Initiate Protocol
+      </button>
+      <div class="sidebar-status-row">
+        <span>System Status:</span>
+        <span class="status-indicator-live">Optimal</span>
       </div>
-      <div class="fw-bold text-light" id="user-name-label">Senior Operator Rao</div>
-      <div class="d-flex justify-content-between align-items-center mt-1">
-        <span class="text-info font-monospace" id="user-role-label">OPERATOR</span>
-        <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.7rem;" onclick="App.logout()" title="Logout">
-          <i class="bi bi-box-arrow-right"></i> Logout
-        </button>
+      <div class="sidebar-status-row">
+        <span>Telemetry Log:</span>
+        <span class="text-light font-monospace" style="font-size: 0.72rem;">Active</span>
+      </div>
+
+      <!-- Compact Active User Strip -->
+      <div class="p-2 rounded mt-2" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); font-size: 0.72rem;">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-light fw-bold" id="user-name-label">Senior Operator Rao</span>
+          <span class="text-info font-monospace" id="user-role-label">OPERATOR</span>
+        </div>
       </div>
     </div>
   </aside>
@@ -263,6 +264,9 @@
     <!-- VIEW 2: LIVE HOTSPOTS CATALOG -->
     <!-- ========================================== -->
     <section id="view-hotspots" class="tactical-view" style="display: none;">
+      <!-- Multi-Spectral Thermal HUD & Telemetry Viewer -->
+      <div id="hotspots-telemetry-hud"></div>
+
       <div class="tactical-card p-3 mb-3">
         <div class="card-title-tactical mb-2">
           <i class="bi bi-funnel"></i> Tactical Hotspot Filters & Satellite Feeds
@@ -447,30 +451,10 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 6: RISK ANALYSIS & EXPLAINABLE AI -->
+    <!-- VIEW 6: RISK ANALYTICS & PREDICTIVE SIM    -->
     <!-- ========================================== -->
     <section id="view-risk" class="tactical-view" style="display: none;">
-      <div class="tactical-card p-3 mb-3">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div>
-            <div class="card-title-tactical mb-1">
-              <i class="bi bi-cpu"></i> Explainable AI Risk Engine (0 - 100)
-            </div>
-            <p class="text-muted mb-0" style="font-size: 0.78rem;">
-              Transparent multi-factor synthesis providing plain-language explanations to disaster management authorities.
-            </p>
-          </div>
-          <div style="min-width: 280px;">
-            <select class="form-select form-select-sm bg-dark text-light border-secondary" id="risk-incident-select">
-              <!-- Populated via JS -->
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div id="risk-analysis-container">
-        <!-- Rendered via JS -->
-      </div>
+      <!-- Populated dynamically by RiskView.render() matching Master Reference UI -->
     </section>
 
     <!-- ========================================== -->
@@ -817,6 +801,195 @@
         </div>
         <div class="modal-footer modal-tactical-footer">
           <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: DISPATCH TACTICAL UNIT -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="dispatchUnitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header" style="background: rgba(56, 189, 248, 0.12); border-bottom: 1px solid rgba(56, 189, 248, 0.3);">
+          <h5 class="modal-title text-info fw-bold">
+            <i class="bi bi-send-fill me-2"></i> Tactical Unit Deployment Dispatcher
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-3">
+            Deploy specialized hazmat and industrial fire-suppression units directly to high-risk thermal coordinates.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">ASSIGN TACTICAL UNIT</label>
+            <select class="form-select bg-dark text-light border-secondary" id="dispatch-unit-type">
+              <option value="Hazmat Foam Cannon Engine #04" selected>Hazmat Foam Cannon Engine #04 (Jamnagar Station)</option>
+              <option value="Rapid Aerial Water Tender #02">Rapid Aerial Water Tender #02 (SEZ Fire Wing)</option>
+              <option value="Industrial Deluge Response Team B">Industrial Deluge Response Team B (Refinery Hazmat)</option>
+              <option value="NDRF 6th Battalion Hazmat Unit">NDRF 6th Battalion Hazmat Unit (Gandhinagar EOC)</option>
+              <option value="Emergency Medical HAZMAT Ambulance #09">Emergency Medical HAZMAT Ambulance #09</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">TARGET INCIDENT SECTOR</label>
+            <select class="form-select bg-dark text-light border-secondary" id="dispatch-target-sector">
+              <option value="Sector 4 (Jamnagar Petrochem C-4 Tank Farm)" selected>Sector 4 (Jamnagar Petrochem C-4 Tank Farm)</option>
+              <option value="Dahej Chemical SEZ - Flare Complex A">Dahej Chemical SEZ - Flare Complex A</option>
+              <option value="Hazira Gas Terminal Perimeter">Hazira Gas Terminal Perimeter</option>
+              <option value="Chembur Fertilizer Industrial Belt">Chembur Fertilizer Industrial Belt</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">DEPLOYMENT CODE / PRIORITY</label>
+            <select class="form-select bg-dark text-light border-secondary" id="dispatch-priority-level">
+              <option value="CODE RED" selected>CODE RED — Immediate Stand-off Containment (ETA: 6 mins)</option>
+              <option value="CODE AMBER">CODE AMBER — Precautionary Standby & Boundary Cooling</option>
+              <option value="CODE BLUE">CODE BLUE — Routine Inspection & Thermal Survey</option>
+            </select>
+          </div>
+
+          <div class="p-2 rounded mt-3" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); font-size: 0.75rem;">
+            <i class="bi bi-info-circle text-info me-1"></i>
+            Telemetry route coordinates will be transmitted via encrypted APRS/APN data-link directly to unit on-board terminal.
+          </div>
+        </div>
+        <div class="modal-footer modal-tactical-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-info btn-sm fw-bold px-3 text-dark" onclick="App.confirmDispatchUnit()">
+            <i class="bi bi-check2-circle me-1"></i> Confirm & Dispatch Unit
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: MULTI-AGENCY EMERGENCY BROADCAST -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="emergencyBroadcastModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header" style="background: rgba(220, 38, 38, 0.18); border-bottom: 1px solid #DC2626;">
+          <h5 class="modal-title text-danger fw-bold">
+            <i class="bi bi-broadcast me-2"></i> Multi-Agency Emergency Broadcast Transmitter
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-danger py-2 small mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <strong>WARNING:</strong> This action dispatches a standardized CAP (Common Alerting Protocol) payload to all emergency response agencies and civilian networks.
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label text-muted small fw-bold">BROADCAST RADIUS</label>
+              <select class="form-select bg-dark text-light border-secondary" id="broadcast-radius">
+                <option value="500m" selected>500m Immediate Blast Stand-off Buffer</option>
+                <option value="1.5km">1.5km Toxic Plume & Gas Dispersion Zone</option>
+                <option value="5.0km">5.0km Regional Alert Corridor</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small fw-bold">SEVERITY LEVEL</label>
+              <select class="form-select bg-dark text-light border-secondary" id="broadcast-severity">
+                <option value="TIER-1 CRITICAL" selected>TIER-1 CRITICAL: Major Industrial Fire</option>
+                <option value="TIER-2 HIGH">TIER-2 HIGH: Elevated Thermal Signature</option>
+                <option value="EVACUATION MANDATE">EVACUATION MANDATE: Mandatory Plant Stand-off</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="form-label text-muted small fw-bold">DISTRIBUTION CHANNELS</label>
+          <div class="row g-2 mb-3">
+            <div class="col-sm-6">
+              <div class="form-check p-2 rounded" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-card);">
+                <input class="form-check-input broadcast-channel-chk ms-0 me-2" type="checkbox" value="State Emergency Operation Center (SEOC)" checked id="chk-bc-1">
+                <label class="form-check-label text-light small" for="chk-bc-1">State EOC Redline Feed</label>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-check p-2 rounded" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-card);">
+                <input class="form-check-input broadcast-channel-chk ms-0 me-2" type="checkbox" value="NDRF Battalion Tactical Bus" checked id="chk-bc-2">
+                <label class="form-check-label text-light small" for="chk-bc-2">NDRF Battalion Tactical Radio</label>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-check p-2 rounded" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-card);">
+                <input class="form-check-input broadcast-channel-chk ms-0 me-2" type="checkbox" value="Industrial Plant Acoustic Sirens" checked id="chk-bc-3">
+                <label class="form-check-label text-light small" for="chk-bc-3">Plant Perimeter Acoustic Siren</label>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-check p-2 rounded" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-card);">
+                <input class="form-check-input broadcast-channel-chk ms-0 me-2" type="checkbox" value="Cell Broadcast Civil SMS (CAP)" checked id="chk-bc-4">
+                <label class="form-check-label text-light small" for="chk-bc-4">Civilian Cellular Warning (CAP-IN)</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label text-muted small fw-bold">BROADCAST DIRECTIVE MESSAGE</label>
+            <textarea class="form-control bg-dark text-light border-secondary" id="broadcast-message-text" rows="3">EMERGENCY NOTICE: Uncontrolled thermal combustion detected in Sector 4 (Jamnagar Petrochem C-4). All non-essential personnel evacuate east toward Corridor Alpha. Avoid 500m downwind plume.</textarea>
+          </div>
+        </div>
+        <div class="modal-footer modal-tactical-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger btn-sm fw-bold px-4" onclick="App.transmitEmergencyBroadcast()">
+            <i class="bi bi-broadcast me-1"></i> Transmit Emergency Broadcast
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: INITIATE PROTOCOL SOP-IND-902 -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="initiateProtocolModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+      <div class="modal-content modal-tactical-content">
+        <div class="modal-header modal-tactical-header" style="background: rgba(14, 165, 233, 0.15); border-bottom: 1px solid #38BDF8;">
+          <h5 class="modal-title text-light fw-bold">
+            <i class="bi bi-lightning-charge-fill text-warning me-2"></i> Initiate Containment Protocol SOP-IND-902
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="badge bg-danger">LEVEL 1 CRITICAL PROTOCOL</span>
+            <span class="font-monospace text-muted small">REF: NDMA-IND-2026</span>
+          </div>
+
+          <p class="text-muted small mb-3">
+            Executing SOP-IND-902 activates automated facility containment systems, engages boundary deluge foam cannons, and establishes hazardous materials stand-off boundaries.
+          </p>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>AUTOMATED EXECUTION PIPELINE</span>
+              <span class="text-info font-monospace">4 PHASES</span>
+            </div>
+            <div class="progress" style="height: 8px; background: #1E293B;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" id="protocol-progress-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div id="protocol-exec-log" class="p-3 rounded mb-3" style="background: #0B0E14; border: 1px solid var(--border-card); min-height: 120px; font-family: var(--font-mono); font-size: 0.75rem;">
+            <div class="text-muted fst-italic">Ready to initiate automated safety sequence...</div>
+          </div>
+
+          <button type="button" class="btn btn-warning text-dark btn-sm w-100 fw-bold py-2" id="btn-exec-protocol" onclick="App.executeInitiatedProtocol()">
+            <i class="bi bi-power me-1"></i> Engage SOP-IND-902 Containment Sequence
+          </button>
+        </div>
+        <div class="modal-footer modal-tactical-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>

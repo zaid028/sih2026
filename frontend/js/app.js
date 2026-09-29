@@ -809,6 +809,124 @@ const App = {
     } catch (err) {
       bodyEl.innerHTML = `<div class="alert alert-danger">Error executing SIH demonstration pipeline: ${err.message}</div>`;
     }
+  },
+
+  openDispatchModal() {
+    const modalEl = document.getElementById("dispatchUnitModal");
+    if (!modalEl) return;
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  },
+
+  confirmDispatchUnit() {
+    const unitSelect = document.getElementById("dispatch-unit-type");
+    const sectorSelect = document.getElementById("dispatch-target-sector");
+    const prioritySelect = document.getElementById("dispatch-priority-level");
+
+    const unit = unitSelect ? unitSelect.value : "Hazmat Foam Cannon Engine #04";
+    const sector = sectorSelect ? sectorSelect.value : "Sector 4 (Jamnagar Petrochem C-4)";
+    const priority = prioritySelect ? prioritySelect.value : "CODE RED";
+
+    const modalEl = document.getElementById("dispatchUnitModal");
+    if (modalEl) {
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    }
+
+    this.showTacticalToast(`DISPATCH CONFIRMED: ${unit} deployed to ${sector} [${priority}] - ETA: 6 mins`);
+
+    // Add alert notification
+    if (AppState.alerts) {
+      AppState.alerts.unshift({
+        id: `ALT-DISP-${Date.now().toString().slice(-4)}`,
+        title: `Tactical Deployment: ${unit}`,
+        message: `Unit assigned to ${sector}. Automated foaming deluge system activated.`,
+        level: "CRITICAL",
+        timestamp: new Date().toISOString()
+      });
+      const badge = document.getElementById("badge-alerts-count");
+      if (badge) badge.innerText = AppState.alerts.length < 10 ? `0${AppState.alerts.length}` : AppState.alerts.length;
+    }
+  },
+
+  openBroadcastModal() {
+    const modalEl = document.getElementById("emergencyBroadcastModal");
+    if (!modalEl) return;
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  },
+
+  transmitEmergencyBroadcast() {
+    const channelBoxes = document.querySelectorAll(".broadcast-channel-chk:checked");
+    const channels = Array.from(channelBoxes).map(c => c.value).join(", ") || "Multi-Agency Emergency Bus";
+    const modalEl = document.getElementById("emergencyBroadcastModal");
+    if (modalEl) {
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    }
+
+    const broadcastId = `CAP-IN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    this.showTacticalToast(`EMERGENCY BROADCAST SENT: [${broadcastId}] across ${channels}. Evacuation siren active!`);
+
+    if (AppState.alerts) {
+      AppState.alerts.unshift({
+        id: broadcastId,
+        title: `Multi-Agency Emergency Broadcast (${broadcastId})`,
+        message: `Common Alerting Protocol (CAP) issued to 1.5km hazard perimeter. Stand-off evacuation required.`,
+        level: "CRITICAL",
+        timestamp: new Date().toISOString()
+      });
+      const badge = document.getElementById("badge-alerts-count");
+      if (badge) badge.innerText = AppState.alerts.length < 10 ? `0${AppState.alerts.length}` : AppState.alerts.length;
+    }
+  },
+
+  openInitiateProtocolModal() {
+    const modalEl = document.getElementById("initiateProtocolModal");
+    if (!modalEl) return;
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  },
+
+  executeInitiatedProtocol() {
+    const btn = document.getElementById("btn-exec-protocol");
+    const progressEl = document.getElementById("protocol-progress-bar");
+    const logEl = document.getElementById("protocol-exec-log");
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Executing Containment...`;
+    }
+
+    let step = 0;
+    const steps = [
+      "Phase 1: Automated emergency pipeline valve isolation engaged...",
+      "Phase 2: High-pressure boundary deluge foam cannons activated...",
+      "Phase 3: 500m thermal hazard stand-off corridor established...",
+      "Phase 4: State Emergency Operation Center & NDRF Battalion notified."
+    ];
+
+    if (logEl) logEl.innerHTML = "";
+
+    const interval = setInterval(() => {
+      if (step < steps.length) {
+        if (progressEl) progressEl.style.width = `${(step + 1) * 25}%`;
+        if (logEl) {
+          const item = document.createElement("div");
+          item.className = "text-success small mb-1";
+          item.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ${steps[step]}`;
+          logEl.appendChild(item);
+        }
+        step++;
+      } else {
+        clearInterval(interval);
+        if (btn) {
+          btn.className = "btn btn-success btn-sm w-100 fw-bold";
+          btn.innerHTML = `<i class="bi bi-shield-check me-1"></i> Protocol SOP-IND-902 Fully Engaged`;
+        }
+        App.showTacticalToast("SOP-IND-902 ENGAGED: Industrial fire suppression protocol in active operation.");
+      }
+    }, 450);
   }
 };
 
